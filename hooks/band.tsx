@@ -476,44 +476,42 @@ export function bandTree(table: ElementTable<'terminal' | 'desktop'>, surface: R
     </Box>
   )
   const nameLength = (item: (typeof compactItems)[number]) => cellsOf(item.short) + (item.until ? item.until.length + 1 : 0)
-  const third = Math.floor((width - 2 * 3) / 3)
-  // Collapsed, one row: each limit sits in a slot of fixed width, so W always starts at
-  // the same place: its name, room for the longest time ("4h 59m", "6d 23h"), its bar
-  // (one fixed width for both), room for "100%". A shorter time moves the bar left
-  // inside the slot, never the slot. Context takes all that is left, its % held to
-  // the right edge, its bar as wide as fits.
-  const TIME_CELLS = 6
-  const limitBar = Math.max(6, third - 'Weekly'.length - '100%'.length - 2)
-  const slotOf = (item: (typeof compactItems)[number]) => cellsOf(item.short) + 1 + TIME_CELLS + 1 + limitBar + 1 + '100%'.length
   // between the slots: enough that a 100% never runs into the next name
   const GAP = 2
-  // the cache's slot: its name, its lifetime, a shorter bar, room for "cold"
-  const cacheBar = Math.max(6, Math.floor(limitBar / 2))
-  const cacheSlot = (item: (typeof compactItems)[number]) => cellsOf(item.short) + 1 + 2 + 1 + cacheBar + 1 + 'cold'.length
-  const slotsWidth = compactItems.filter(item => item.f || item.isCache).reduce((sum, item) => sum + (item.isCache ? cacheSlot(item) : slotOf(item)) + GAP, 0)
-  const contextItem = compactItems.find(item => !item.f && !item.isCache)!
-  const contextBar = Math.max(6, width - slotsWidth - nameLength(contextItem) - 1 - 1 - contextItem.value.length)
+  // Collapsed, one row: four equal slots, a quarter of the row each (5H, W, Context,
+  // Cache). In each, the name and its time, a bar that takes what is left, and the
+  // value held to the slot's right edge. The gap sits inside each slot but the last,
+  // so the four quarters add up to the whole row.
+  const quarterCells = Math.floor(width / 4)
   const collapsedBlock = isOneRow ? (
-    <Box flexDirection="row" columnGap={GAP}>
-      {compactItems.map(item => {
-        const pct = item.value
-        const isContext = item === contextItem
+    <Box flexDirection="row">
+      {compactItems.map((item, i) => {
+        const isLast = i === compactItems.length - 1
+        const alt = item.isCache ? cacheAlt : fmt(t.barUsed, { label: item.label, percent: Math.round(item.percent) })
+        const barCells = Math.max(4, quarterCells - (isLast ? 0 : GAP) - nameLength(item) - 1 - 1 - item.value.length)
+        const marker = item.f && markerOf(item.f)
         return (
-          <Box flexDirection="row" width={isContext ? undefined : item.isCache ? cacheSlot(item) : slotOf(item)} flexGrow={isContext ? 1 : 0} flexShrink={isContext ? 1 : 0}>
+          <Box flexDirection="row" width="25%" flexShrink={0} paddingRight={isLast ? 0 : GAP}>
             <Box marginRight={1} flexShrink={0}>
               {nameOf(item)}
             </Box>
-            {isContext && Svg ? (
-              // on the desktop the bar stretches to fill what the row leaves, so the
-              // % lands at the right edge however wide the text draws
+            {Svg ? (
+              // on the desktop the bar stretches to fill what the slot leaves, so the
+              // value lands at the slot's right edge however wide the text draws
               <Box flexGrow={1} flexShrink={1} height={1} alignItems="center">
-                <Svg alt={fmt(t.barUsed, { label: item.label, percent: Math.round(item.percent) })} source={barSvg(item.segments, 4000)} height={BAR_PX} />
+                <Svg
+                  alt={alt}
+                  source={barSvg(item.segments, barCells * 8, item.f && marker !== undefined ? { at: marker, color: tickColor(item.f, c) } : undefined)}
+                  height={BAR_PX}
+                />
               </Box>
             ) : (
-              bar(item.isCache ? cacheAlt : fmt(t.barUsed, { label: item.label, percent: Math.round(item.percent) }), item.segments, isContext ? contextBar : item.isCache ? cacheBar : limitBar, item.f)
+              <Box flexGrow={1} flexShrink={1}>
+                {bar(alt, item.segments, barCells, item.f)}
+              </Box>
             )}
-            <Box marginLeft={1} flexShrink={0} flexGrow={isContext && !Svg ? 1 : 0} justifyContent={isContext ? 'flex-end' : undefined}>
-              <Text bold color={item.color}>{pct}</Text>
+            <Box marginLeft={1} flexShrink={0}>
+              <Text bold color={item.color}>{item.value}</Text>
             </Box>
           </Box>
         )

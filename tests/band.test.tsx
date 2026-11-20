@@ -1263,5 +1263,7 @@ test('the cache bar counts down from each main-chat reply, for the lifetime the 
   expect(await ui.find({ type: 'Text', text: 'Cache' })).toBeDefined()
   expect(await ui.find({ type: 'Text', text: '5m' })).toBeDefined()
   expect(await ui.find({ type: 'Text', text: '4m' })).toBeDefined()
+  // the four take a quarter of the row each
+  expect((await ui.findAll({ type: 'Box' })).filter(b => b.props.width === '25%').length).toBe(4)
   await ui.unmount()
 })
