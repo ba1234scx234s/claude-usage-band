@@ -487,20 +487,21 @@ export function bandTree(table: ElementTable<'terminal' | 'desktop'>, surface: R
   const nameLength = (item: (typeof compactItems)[number]) => cellsOf(item.short) + (item.until ? item.until.length + 1 : 0)
   // between the slots: enough that a 100% never runs into the next name
   const GAP = 2
-  // Collapsed, one row: four equal slots, a quarter of the row each (5H, W, Context,
-  // Cache). In each, the name and its time, a bar that takes what is left, and the
-  // value held to the slot's right edge. The gap sits inside each slot but the last,
-  // so the four quarters add up to the whole row.
-  const quarterCells = Math.floor(width / 4)
+  // Collapsed, one row: 5h, W and Context take equal slots, Cache half of one (2:2:2:1,
+  // so 2/7 of the row each and 1/7 for Cache). In each, the name and its time, a bar that
+  // takes what is left, and the value held to the slot's right edge. The gap sits inside
+  // each slot but the last, so the slots add up to the whole row.
+  const shareOf = (item: (typeof compactItems)[number]) => (item.isCache ? 1 : 2) / 7
+  const slotWidth = (item: (typeof compactItems)[number]) => `${(shareOf(item) * 100).toFixed(2)}%`
   const collapsedBlock = isOneRow ? (
     <Box flexDirection="row">
       {compactItems.map((item, i) => {
         const isLast = i === compactItems.length - 1
         const alt = item.isCache ? cacheAlt : fmt(t.barUsed, { label: item.label, percent: Math.round(item.percent) })
-        const barCells = Math.max(4, quarterCells - (isLast ? 0 : GAP) - nameLength(item) - 1 - 1 - item.value.length)
+        const barCells = Math.max(4, Math.floor(width * shareOf(item)) - (isLast ? 0 : GAP) - nameLength(item) - 1 - 1 - item.value.length)
         const marker = item.f && markerOf(item.f)
         return (
-          <Box flexDirection="row" width="25%" flexShrink={0} paddingRight={isLast ? 0 : GAP}>
+          <Box flexDirection="row" width={slotWidth(item)} flexShrink={0} paddingRight={isLast ? 0 : GAP}>
             <Box marginRight={1} flexShrink={0}>
               {nameOf(item)}
             </Box>
