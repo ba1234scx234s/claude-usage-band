@@ -1,5 +1,6 @@
 import { expect, mock, test } from 'claude-code/testing'
 import type { On, SessionRateLimit, SessionUsage } from 'claude-code'
+import { mix } from '../hooks/colors'
 
 const NOW = Date.parse('2026-10-04T06:00:00Z')
 const MIN = 60_000
@@ -1251,9 +1252,13 @@ test('the cache bar counts down from each main-chat reply, for the lifetime the 
   await wait(1)
   expect(await ui.find({ text: '59m left' })).toBeDefined()
 
-  // past its hour it is cold
+  // just renewed it is green; the bar fills from the left as the hour runs
+  // (a minute in: a twentieth of the way from green to yellow)
+  expect((await ui.find({ type: 'Text', text: '59m left' }))?.props.color).toBe(mix('#4ade80', '#e5b54a', 3 / 60))
+  // past its hour it is cold, and red
   await wait(60)
   expect(await ui.find({ text: 'expired' })).toBeDefined()
+  expect((await ui.find({ type: 'Text', text: 'expired' }))?.props.color).toBe('#e5534b')
 
   // a 5 minute write, collapsed: the Cache slot shows its lifetime and the time left
   ttl = '5m'

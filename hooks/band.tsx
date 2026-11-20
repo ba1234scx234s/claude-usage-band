@@ -3,7 +3,7 @@
 import type { ElementTable, RenderSurface } from 'claude-code'
 
 import type { AutoCompact, CacheWindow, Category, Snapshot, Spend } from '../types'
-import { DARK, LIGHT, rampColor } from './colors'
+import { DARK, LIGHT, mix, rampColor } from './colors'
 import type { Palette, Ramp } from './colors'
 import { duration, forecast, headline, markerOf, order, windowName, WINDOWS } from './forecast'
 import type { Forecast } from './forecast'
@@ -389,18 +389,27 @@ export function bandTree(table: ElementTable<'terminal' | 'desktop'>, surface: R
 
   const contextColor = rampColor(snap.percent, view.contextRamp, c)
 
-  // the prompt cache: the time left before it lapses, as a bar that empties. Green while
-  // warm, yellow in its last fifth, grey once cold (the next message re-sends it all)
+  // the prompt cache: a bar that fills from the left as its lifetime runs, green when
+  // just renewed, through yellow and orange, red when full (the lifetime is up, and the
+  // next message re-sends it all). The value beside it is the time left
   const cache = view.cache ?? null
   const cacheLeft = cache ? Math.max(0, cache.at + cache.ttlMs - now) : 0
   const cacheShare = cache ? cacheLeft / cache.ttlMs : 0
-  const cacheColor = !cache || cacheLeft === 0 ? c.muted : cacheShare <= 0.2 ? c.yellow : c.switchOn
+  const cacheUsed = cache ? 1 - cacheShare : 0
+  const ORANGE = view.isLight ? '#f97316' : '#fb923c'
+  const cacheStops = [c.switchOn, c.yellow, ORANGE, c.red]
+  const cacheRamp = (share: number) => {
+    const at = Math.min(1, Math.max(0, share)) * (cacheStops.length - 1)
+    const i = Math.min(cacheStops.length - 2, Math.floor(at))
+    return mix(cacheStops[i]!, cacheStops[i + 1]!, at - i)
+  }
+  const cacheColor = !cache ? c.muted : cacheRamp(cacheUsed)
   const cacheMins = Math.ceil(cacheLeft / 60_000)
   const cacheValue = !cache ? '–' : cacheLeft === 0 ? 'cold' : cacheMins >= 60 ? '1h' : `${cacheMins}m`
   const cacheTtl = cache ? (cache.ttlMs >= 3_600_000 ? '1h' : '5m') : ''
   const cacheSegments: Segment[] = [
-    { color: cacheColor, share: cacheShare * 100 },
-    { color: c.track, share: 100 - cacheShare * 100 },
+    { color: cacheColor, share: cacheUsed * 100 },
+    { color: c.track, share: 100 - cacheUsed * 100 },
   ]
   const cacheAlt = `Cache: ${!cache ? 'no reply yet' : cacheLeft === 0 ? 'expired' : `${cacheValue} left`}`
   const cacheBlock = (
@@ -467,7 +476,7 @@ export function bandTree(table: ElementTable<'terminal' | 'desktop'>, surface: R
     // Context with the whole window, as the limits have their time: 1M, 200k
     { label: t.context, short: t.context, until: tokens(snap.window), percent: snap.percent, value: `${Math.round(snap.percent)}%`, isCache: false, color: contextColor, segments: contextSegments, f: undefined as Forecast | undefined },
     // the cache with its lifetime, its time left where the others have a %
-    { label: 'Cache', short: 'Cache', until: cacheTtl, percent: cacheShare * 100, value: cacheValue, isCache: true, color: cacheColor, segments: cacheSegments, f: undefined as Forecast | undefined },
+    { label: 'Cache', short: 'Cache', until: cacheTtl, percent: cacheUsed * 100, value: cacheValue, isCache: true, color: cacheColor, segments: cacheSegments, f: undefined as Forecast | undefined },
   ]
   const nameOf = (item: (typeof compactItems)[number]) => (
     <Box flexDirection="row" columnGap={1} flexShrink={0}>
