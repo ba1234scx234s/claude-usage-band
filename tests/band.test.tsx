@@ -1270,7 +1270,7 @@ test('the cache bar counts down from each main-chat reply, for the lifetime the 
   expect(await ui.find({ type: 'Text', text: '4m' })).toBeDefined()
   // 5h, W and Context take 2/7 of the row each, Cache half of that
   const slots = (await ui.findAll({ type: 'Box' })).map(b => b.props.width)
-  expect(slots.filter(w => w === '28.57%').length).toBe(3)
-  expect(slots.filter(w => w === '14.29%').length).toBe(1)
+  expect(slots.filter(w => w === '29%' || w === '28%').length).toBe(3)
+  expect(slots.filter(w => w === '14%').length).toBe(1)
   await ui.unmount()
 })

@@ -488,11 +488,13 @@ export function bandTree(table: ElementTable<'terminal' | 'desktop'>, surface: R
   // between the slots: enough that a 100% never runs into the next name
   const GAP = 2
   // Collapsed, one row: 5h, W and Context take equal slots, Cache half of one (2:2:2:1,
-  // so 2/7 of the row each and 1/7 for Cache). In each, the name and its time, a bar that
-  // takes what is left, and the value held to the slot's right edge. The gap sits inside
-  // each slot but the last, so the slots add up to the whole row.
-  const shareOf = (item: (typeof compactItems)[number]) => (item.isCache ? 1 : 2) / 7
-  const slotWidth = (item: (typeof compactItems)[number]) => `${(shareOf(item) * 100).toFixed(2)}%`
+  // in whole %s, as the surfaces take them: 29, 29, 28 and 14). In each, the name and its
+  // time, a bar that takes what is left, and the value held to the slot's right edge. The
+  // gap sits inside each slot but the last, so the slots add up to the whole row.
+  const SLOT_PERCENT = [29, 29, 28, 14]
+  const percentOf = (i: number) => SLOT_PERCENT[Math.min(i, SLOT_PERCENT.length - 1)]!
+  const shareOf = (item: (typeof compactItems)[number]) => percentOf(compactItems.indexOf(item)) / 100
+  const slotWidth = (item: (typeof compactItems)[number]) => `${percentOf(compactItems.indexOf(item))}%`
   const collapsedBlock = isOneRow ? (
     <Box flexDirection="row">
       {compactItems.map((item, i) => {
