@@ -30,6 +30,8 @@ export type BandView = {
   t: Strings
   /** the switch's click region failed on this surface: a Button takes the press instead */
   isHitDown?: boolean
+  // the bars' click region failed: the band keeps its header and ▲ button collapsed
+  isBarsHitDown?: boolean
 }
 
 /** the band in one line, for the status line while it is off: "5H 7% · Weekly 57% · Context 38%" */
@@ -510,9 +512,26 @@ export function bandTree(table: ElementTable<'terminal' | 'desktop'>, surface: R
     </Box>
   )
 
+  // On the desktop the bars themselves expand and collapse the band: an empty region
+  // over them takes the click (bars-hit.tsx). Collapsed, the band is the bars alone;
+  // the headline and the controls come with the expanded view
+  const isBarsTap = Svg !== undefined && !view.isBarsHitDown
+  const tappable = (content: typeof collapsedBlock) =>
+    isBarsTap ? (
+      <Box key="barsTap" flexDirection="column">
+        {content}
+        <Box position="absolute" top={0} left={0} width="100%" height="100%">
+          <Client key="barsHit" module="./bars-hit.tsx" width="100%" height="100%" />
+        </Box>
+      </Box>
+    ) : (
+      content
+    )
+  const isBare = collapsed && isBarsTap
+
   return (
     <Box flexDirection="column">
-      {isHeadBeside ? (
+      {isBare ? null : isHeadBeside ? (
         <Box flexDirection="row" justifyContent="space-between" alignItems="center" marginBottom={gap} paddingRight={HOST_HIDE}>
           <Box flexShrink={1}>{headText}</Box>
           {controls}
@@ -538,19 +557,21 @@ export function bandTree(table: ElementTable<'terminal' | 'desktop'>, surface: R
         )
       ) : null}
 
-      {collapsed ? (
-        collapsedBlock
-      ) : isSplit ? (
-        <Box flexDirection="row" columnGap={4}>
-          {limitsBlock}
-          {contextBlock}
-        </Box>
-      ) : (
-        <Box flexDirection="column">
-          {limitsBlock}
-          <Text> </Text>
-          {contextBlock}
-        </Box>
+      {tappable(
+        collapsed ? (
+          collapsedBlock
+        ) : isSplit ? (
+          <Box flexDirection="row" columnGap={4}>
+            {limitsBlock}
+            {contextBlock}
+          </Box>
+        ) : (
+          <Box flexDirection="column">
+            {limitsBlock}
+            <Text> </Text>
+            {contextBlock}
+          </Box>
+        ),
       )}
     </Box>
   )

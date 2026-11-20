@@ -6,7 +6,9 @@ const MIN = 60_000
 const HOUR = 60 * MIN
 const SURFACES = ['terminal', 'desktop'] as const
 // a click on the desktop switch's pill, as its click region (a Client) hears it
-const PILL = { type: 'down', x: 1, y: 0, button: 'left' } as const
+const PILL = { type: 'down', x: 1, y: 0, button: 'left', in: 'autoHit' } as const
+// a click on the bars, which expands or collapses the band on the desktop
+const BARS = { type: 'down', x: 1, y: 0, button: 'left', in: 'barsHit' } as const
 
 // the dark palette's grey, yellow and red (hooks/colors.ts)
 const GREY = '#9b9a96'
@@ -551,10 +553,17 @@ test('the arrow collapses the band to one row of three bars, and back', async ($
     const ui = await $.ui.mount({ plugin: 'usage-quota', surface, component: 'AbovePrompt', props: PROPS })
     expect(await ui.find({ type: 'Button', label: '▼' })).toBeDefined()
     await ui.press({ key: 'collapse' })
-    // the headline and Compact stay; the notes and categories go
-    expect(await ui.find({ text: /^On track\./ })).toBeDefined()
-    expect(await ui.find({ type: 'Button', label: 'Compact' })).toBeDefined()
-    expect(await ui.find({ type: 'Button', label: '▲' })).toBeDefined()
+    if (surface === 'desktop') {
+      // the desktop keeps the bars alone: no headline, no controls
+      expect(await ui.find({ text: /^On track\./ })).toBeUndefined()
+      expect(await ui.find({ type: 'Button', label: 'Compact' })).toBeUndefined()
+      expect(await ui.find({ type: 'Button', label: '▲' })).toBeUndefined()
+    } else {
+      // the terminal has no click region: the headline and Compact stay
+      expect(await ui.find({ text: /^On track\./ })).toBeDefined()
+      expect(await ui.find({ type: 'Button', label: 'Compact' })).toBeDefined()
+      expect(await ui.find({ type: 'Button', label: '▲' })).toBeDefined()
+    }
     // the limits by short name, each with the time to its reset, in grey
     expect(await ui.find({ text: '5H' })).toBeDefined()
     expect(await ui.find({ text: 'W' })).toBeDefined()
@@ -574,8 +583,17 @@ test('the arrow collapses the band to one row of three bars, and back', async ($
       const weekly = (await ui.findAll({ type: 'Svg' })).find(svg => /^Weekly/.test(String(svg.props.alt)))
       expect(String(weekly?.props.source)).toContain(`fill="${GREY}"`)
     }
-    await ui.press({ key: 'collapse' })
+    // the desktop expands on a click on the bars, the terminal on its ▲
+    if (surface === 'desktop') await ui.pointer(BARS)
+    else await ui.press({ key: 'collapse' })
     expect(await ui.find({ text: 'Messages' })).toBeDefined()
+    expect(await ui.find({ type: 'Button', label: 'Compact' })).toBeDefined()
+    // and a click on the expanded bars collapses it again
+    if (surface === 'desktop') {
+      await ui.pointer(BARS)
+      expect(await ui.find({ text: 'Messages' })).toBeUndefined()
+      await ui.pointer(BARS)
+    }
     await ui.unmount()
   }
 })
@@ -641,7 +659,8 @@ test('auto compact: the switch shows the field, and it compacts between turns on
   // a press elsewhere in the band sets a draft at once
   await ui.input({ key: await fieldKey(ui), text: '7', kind: 'change' })
   await ui.press({ key: 'collapse' })
-  await ui.press({ key: 'collapse' })
+  // collapsed, the desktop draws the bars alone: a click on them expands it again
+  await ui.pointer(BARS)
   expect((await ui.find({ type: 'Input' }))?.props.value).toBe('15')
   await ui.input({ key: await fieldKey(ui), text: '40' })
   expect((await ui.find({ type: 'Input' }))?.props.value).toBe('40')
@@ -857,7 +876,8 @@ test('a narrow chat stacks the band and wraps its text, nothing cut off or dropp
     expect((await ui.find({ type: 'Text', text: /^On pace for about/ }))?.props.wrap).toBe('wrap')
     await ui.press({ key: 'collapse' })
     for (const text of ['5H', 'W', 'Context']) expect(await ui.find({ text })).toBeDefined()
-    await ui.press({ key: 'collapse' })
+    if (surface === 'desktop') await ui.pointer(BARS)
+    else await ui.press({ key: 'collapse' })
     await ui.unmount()
   }
 })
@@ -917,8 +937,8 @@ test('a chat with its own auto compact setting keeps it over the default, and it
   await ui.pointer(PILL)
   expect(await ui.find({ type: 'Svg', alt: 'Auto compact on' })).toBeDefined()
   // only a press: the pointer moving over it, or another button, changes nothing
-  await ui.pointer({ type: 'move', x: 2, y: 0 })
-  await ui.pointer({ type: 'down', x: 1, y: 0, button: 'right' })
+  await ui.pointer({ type: 'move', x: 2, y: 0, in: 'autoHit' })
+  await ui.pointer({ type: 'down', x: 1, y: 0, button: 'right', in: 'autoHit' })
   expect(await ui.find({ type: 'Svg', alt: 'Auto compact on' })).toBeDefined()
   await ui.pointer(PILL)
   expect(await ui.find({ type: 'Svg', alt: 'Auto compact off' })).toBeDefined()

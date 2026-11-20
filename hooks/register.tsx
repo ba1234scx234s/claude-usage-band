@@ -23,6 +23,8 @@ let t = stringsOf('en')
 let appLocale: string | undefined
 // the switch's click region failed to load or draw (ui.fault): a Button takes its place
 let isHitDown = false
+// the bars' click region failed on this surface (bars-hit.tsx)
+let isBarsHitDown = false
 
 // the engine reads these where they are made: the state they name stays in this file
 const snapshot = atom({ plugin: 'usage-quota', key: 'snapshot' } as const, null as Snapshot | null)
@@ -687,12 +689,18 @@ export const register: Register = (on, options) => {
       await commitDraft($)
       bandActions($).toggleAuto(await read($, autoCompact))
     }
+    // a press on the bars, from their click region (bars-hit.tsx): expand or collapse
+    if (e.element === 'barsHit' && e.data === 'toggle') {
+      await commitDraft($)
+      await bandActions($).collapse()
+    }
     return next(e)
   })
 
   // the region failed on this surface: the band redraws with a Button over the pill
   on('ui.fault', { component: 'AbovePrompt' }, async ($, e, next) => {
     if (e.element === 'autoHit') isHitDown = true
+    if (e.element === 'barsHit') isBarsHitDown = true
     return next(e)
   })
 
@@ -794,6 +802,7 @@ export const register: Register = (on, options) => {
       chatCost: settings.chatCost,
       t: stringsOf(await read($, language)),
       isHitDown,
+      isBarsHitDown,
     }, bandActions($))
   })
 }
