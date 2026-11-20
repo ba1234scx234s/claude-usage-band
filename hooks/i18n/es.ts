@@ -5,7 +5,7 @@ export const es: Strings = {
   locale: 'es-ES',
   fiveHour: '5 horas',
   weekly: 'Semanal',
-  fiveHourShort: '5H',
+  fiveHourShort: '5h',
   weeklyShort: 'S',
   limitReached: 'Límite alcanzado. El uso se reanuda: {when}.',
   runOutAt: 'A este ritmo llegarás al límite antes del reinicio de las {time}.',

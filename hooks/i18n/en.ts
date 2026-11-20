@@ -5,7 +5,7 @@ export const en = {
   locale: 'en-US',
   fiveHour: '5 Hour',
   weekly: 'Weekly',
-  fiveHourShort: '5H',
+  fiveHourShort: '5h',
   weeklyShort: 'W',
   limitReached: 'Limit reached. Usage resumes at {when}.',
   runOutAt: "At this pace you'll run out before the {time} reset.",

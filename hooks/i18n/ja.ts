@@ -5,7 +5,7 @@ export const ja: Strings = {
   locale: 'ja-JP',
   fiveHour: '5時間',
   weekly: '週間',
-  fiveHourShort: '5H',
+  fiveHourShort: '5h',
   weeklyShort: '週',
   limitReached: '上限に達しました。{when}に再開します。',
   runOutAt: 'このペースだと{time}のリセット前に上限に達します。',

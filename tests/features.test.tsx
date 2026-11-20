@@ -109,7 +109,7 @@ test('with the band off, the status line carries the usage, and goes when it is 
   const { said } = world(on, state)
   await $.session.start({ cwd: '.', surface: 'desktop', isInteractive: true })
   await $.command.run({ command: 'quota', args: '' } as never)
-  expect(said.status.at(-1)).toBe('5H 7% · Weekly 57% · Context 16%')
+  expect(said.status.at(-1)).toBe('5h 7% · Weekly 57% · Context 16%')
   await $.command.run({ command: 'quota', args: '' } as never)
   expect(said.status.at(-1)).toBeUndefined()
 })

@@ -566,10 +566,10 @@ test('the arrow collapses the band to one row of three bars, and back', async ($
       expect(await ui.find({ type: 'Button', label: '▲' })).toBeDefined()
     }
     // the limits by short name, each with the time to its reset, in grey
-    expect(await ui.find({ text: '5H' })).toBeDefined()
+    expect(await ui.find({ text: '5h' })).toBeDefined()
     expect(await ui.find({ text: 'W' })).toBeDefined()
     expect(await ui.find({ text: '5 Hour' })).toBeUndefined()
-    const times = (await ui.findAll({ type: 'Text' })).filter(t => /^(\d+d )?(\d+h )?\d+[dhm]$/.test(String(t.text)))
+    const times = (await ui.findAll({ type: 'Text' })).filter(t => !t.props.bold && /^(\d+d )?(\d+h )?\d+[dhm]$/.test(String(t.text)))
     // the 5 hour window is not running: its whole length; Weekly resets in 3 days
     expect(times.map(t => t.text)).toEqual(['5h', '3d'])
     for (const t of times) expect(t.props.color).toBe(GREY)
@@ -876,7 +876,7 @@ test('a narrow chat stacks the band and wraps its text, nothing cut off or dropp
     expect(await ui.find({ type: 'Button', label: 'Compact' })).toBeDefined()
     expect((await ui.find({ type: 'Text', text: /^On pace for about/ }))?.props.wrap).toBe('wrap')
     await ui.press({ key: 'collapse' })
-    for (const text of ['5H', 'W', 'Context']) expect(await ui.find({ text })).toBeDefined()
+    for (const text of ['5h', 'W', 'Context']) expect(await ui.find({ text })).toBeDefined()
     if (surface === 'desktop') await ui.pointer(BARS)
     else await ui.press({ key: 'collapse' })
     await ui.unmount()

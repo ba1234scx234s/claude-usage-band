@@ -5,7 +5,7 @@ export const ko: Strings = {
   locale: 'ko-KR',
   fiveHour: '5시간',
   weekly: '주간',
-  fiveHourShort: '5H',
+  fiveHourShort: '5h',
   weeklyShort: '주',
   limitReached: '한도에 도달했습니다. {when}에 다시 사용할 수 있습니다.',
   runOutAt: '이 속도라면 {time} 초기화 전에 한도에 도달합니다.',

@@ -8,7 +8,7 @@ export const WINDOWS: Record<string, { ms: number }> = {
   seven_day: { ms: 7 * 24 * HOUR },
 }
 
-/** a window's name in the band's language: "5 Hour", "Weekly", or short: "5H", "W" */
+/** a window's name in the band's language: "5 Hour", "Weekly", or short: "5h", "W" */
 export const windowName = (kind: string, t: Strings, isShort = false) =>
   kind === 'five_hour' ? (isShort ? t.fiveHourShort : t.fiveHour) : kind === 'seven_day' ? (isShort ? t.weeklyShort : t.weekly) : kind
 

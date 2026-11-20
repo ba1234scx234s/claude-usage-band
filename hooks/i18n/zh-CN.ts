@@ -5,7 +5,7 @@ export const zhCN: Strings = {
   locale: 'zh-CN',
   fiveHour: '5 小时',
   weekly: '每周',
-  fiveHourShort: '5H',
+  fiveHourShort: '5h',
   weeklyShort: '周',
   limitReached: '已达到上限。将于 {when} 恢复使用。',
   runOutAt: '按此速度，你将在 {time} 重置前用完额度。',

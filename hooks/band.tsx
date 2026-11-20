@@ -36,7 +36,7 @@ export type BandView = {
   cache?: CacheWindow | null
 }
 
-/** the band in one line, for the status line while it is off: "5H 7% · Weekly 57% · Context 38%" */
+/** the band in one line, for the status line while it is off: "5h 7% · Weekly 57% · Context 38%" */
 export function summary(snap: Snapshot, t: Strings): string {
   const limits = Object.keys(WINDOWS).flatMap(kind => {
     const l = snap.limits.find(x => x.kind === kind)
