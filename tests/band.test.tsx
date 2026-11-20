@@ -1274,3 +1274,62 @@ test('the cache bar counts down from each main-chat reply, for the lifetime the 
   expect(slots.filter(w => w === '14%').length).toBe(1)
   await ui.unmount()
 })
+
+test('keep cache warm: switched on in a chat, it re-reads the cache just before it lapses, there alone', { timeoutMs: 30_000 }, async ($, on) => {
+  const clock = startWorld(on, { value: 16 }, [])
+  const forks: string[] = []
+  let reads = 1000
+  on('model.fork', (_$, e) => {
+    forks.push(e.prompt)
+    return { value: { isAnswered: true, text: 'ok', usage: { input_tokens: 5, output_tokens: 1, cache_read_input_tokens: reads, cache_creation_input_tokens: 0, model: 'claude' } } } as never
+  })
+  on('turn.step', async function* (_$, e) {
+    const usage = { input_tokens: 10, output_tokens: 10, model: 'claude', cache_read_input_tokens: 1000, cache_creation_input_tokens: 500, ephemeral_1h_input_tokens: 500, ephemeral_5m_input_tokens: 0 }
+    return { turnId: e.turnId, index: e.index, answer: '', toolUses: [], stopReason: 'end_turn', usage } as never
+  })
+  const wait = async (minutes: number) => {
+    for (let i = 0; i < minutes; i++) await clock.advance(60_000)
+  }
+  await $.session.start({ cwd: '.', surface: 'desktop', isInteractive: true })
+  const ui = await $.ui.mount({ plugin: 'usage-quota', surface: 'desktop', component: 'AbovePrompt', props: PROPS })
+  for await (const _ of $.turn.step({ turnId: 't1', index: 0, model: 'claude', messageCount: 1 } as never)) void _
+
+  // off by default: the hour runs out and nothing is sent
+  expect(await ui.find({ type: 'Svg', alt: 'Keep cache warm off' })).toBeDefined()
+  await wait(61)
+  expect(forks).toEqual([])
+  expect(await ui.find({ type: 'Text', text: 'expired' })).toBeDefined()
+
+  // a cold cache is not warmed when switched on: reading it would re-send it all
+  await ui.pointer({ type: 'down', x: 1, y: 0, button: 'left', in: 'warmHit' })
+  expect(await ui.find({ type: 'Svg', alt: 'Keep cache warm on' })).toBeDefined()
+  await wait(2)
+  expect(forks).toEqual([])
+
+  // a new reply: two minutes before its hour is up, one fork re-reads it and the hour starts over
+  for await (const _ of $.turn.step({ turnId: 't2', index: 0, model: 'claude', messageCount: 3 } as never)) void _
+  await wait(57)
+  expect(forks).toEqual([])
+  await wait(2)
+  expect(forks.length).toBe(1)
+  await wait(1)
+  // the hour starts over from the fork (a tick or two after it was due)
+  expect(await ui.find({ type: 'Text', text: /^5[89]m left$/ })).toBeDefined()
+  expect(await ui.find({ type: 'Text', text: '1h cache, kept warm in this chat' })).toBeDefined()
+  // never while a turn runs: the turn itself renews it
+  await $.turn.start({ text: 'go', turnId: 't3' } as never)
+  await wait(59)
+  expect(forks.length).toBe(1)
+  await $.turn.complete(TURN)
+
+  // a renewal that reads nothing is tried once, not again every 3 seconds
+  reads = 0
+  for await (const _ of $.turn.step({ turnId: 't4', index: 0, model: 'claude', messageCount: 5 } as never)) void _
+  await wait(60)
+  expect(forks.length).toBe(2)
+
+  // switched off, it is saved for this chat
+  await ui.pointer({ type: 'down', x: 1, y: 0, button: 'left', in: 'warmHit' })
+  expect(await ui.find({ type: 'Svg', alt: 'Keep cache warm off' })).toBeDefined()
+  await ui.unmount()
+})

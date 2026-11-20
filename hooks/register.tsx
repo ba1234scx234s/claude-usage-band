@@ -25,6 +25,8 @@ let appLocale: string | undefined
 let isHitDown = false
 // the bars' click region failed on this surface (bars-hit.tsx)
 let isBarsHitDown = false
+// the keep-warm switch's click region failed on this surface
+let isWarmHitDown = false
 
 // the engine reads these where they are made: the state they name stays in this file
 const snapshot = atom({ plugin: 'usage-quota', key: 'snapshot' } as const, null as Snapshot | null)
@@ -48,6 +50,46 @@ const openRows = atom({ plugin: 'usage-quota', key: 'openRows' } as const, [] as
 const cacheWindow = atom({ plugin: 'usage-quota', key: 'cache' } as const, null as CacheWindow | null)
 const CACHE_HOUR_MS = 3_600_000
 const CACHE_5M_MS = 300_000
+// keep warm: set per chat; re-reads the cache this long before it lapses
+const keepWarm = atom({ plugin: 'usage-quota', key: 'keepWarm' } as const, false)
+const WARM_LEAD_MS = 120_000
+let isWarming = false
+// the cache window last tried: one try each, so a failure is never retried every 3s
+let warmTriedFor: number | undefined
+
+async function saveWarm($: EngineInterface, isOnNow: boolean): Promise<void> {
+  await update($, keepWarm, () => isOnNow)
+  await storeSet($, `keepWarm:${autoChat ?? (await chatId($))}`, isOnNow)
+}
+
+// Just before this chat's cache lapses, and only while no turn runs: one tool-less side
+// request over the chat's own transcript (a fork), which reads the cached conversation and
+// so renews its lifetime. A cache already gone (the machine slept) is left alone: reading
+// it then would re-send it all for nothing.
+async function warmIfDue($: EngineInterface): Promise<void> {
+  // claimed before anything is awaited: the 3s ticks that pile up meanwhile see it taken
+  if (isWarming || isBusy) return
+  isWarming = true
+  try {
+    if (!(await read($, keepWarm))) return
+    const cache = await read($, cacheWindow)
+    if (!cache) return
+    const now = await $.clock.now()
+    const left = cache.at + cache.ttlMs - now
+    if (left <= 0 || left > WARM_LEAD_MS || warmTriedFor === cache.at) return
+    warmTriedFor = cache.at
+    const r = await $.model.fork({ prompt: 'You have no tools. Answer straight away without thinking it over: reply with just ok' })
+    if (r.isAnswered && r.usage.cache_read_input_tokens > 0) {
+      await update($, cacheWindow, prev => ({ at: now, ttlMs: prev?.ttlMs ?? cache.ttlMs }))
+    } else {
+      $.ui.toast('Keep cache warm: the cache could not be renewed this time')
+    }
+  } catch {
+    $.ui.toast('Keep cache warm: the cache could not be renewed this time')
+  } finally {
+    isWarming = false
+  }
+}
 
 // the setting's language, else the app's, else the shell's (LC_ALL, LANG), else English
 let shellLocale: string | undefined
@@ -333,6 +375,9 @@ async function loadAuto($: EngineInterface): Promise<void> {
   const id = await chatId($)
   if (id === autoChat) return
   autoChat = id
+  // keep warm is this chat's alone: off unless switched on here
+  const warm = (await storeGet($, `keepWarm:${id}`)) === true
+  await update($, keepWarm, () => warm)
   const saved = (await storeGet($, `autoCompact:${id}`)) as AutoCompact | undefined
   const fallback = (await storeGet($, 'autoCompactDefault')) as AutoCompact | undefined
   // the same chat after a reload keeps its ask, what holds it back and what it spent
@@ -621,6 +666,9 @@ function bandActions($: EngineInterface): BandActions {
     },
     compact: () => compactNow($),
     answer: choice => void answerAsk($, choice),
+    toggleWarm: () => {
+      void read($, keepWarm).then(isOnNow => saveWarm($, !isOnNow))
+    },
     collapse: async () => {
       // from the state, not a draw's value (an older draw's); saved for the other
       // chats first, so the half-second read never undoes the press
@@ -664,6 +712,8 @@ export const register: Register = (on, options) => {
     // keep it live, mid-turn included: what Claude Code already holds (the context and
     // the limits each reply carries), every 3s; timers stop when the module reloads
     $.clock.every(LOCAL_EVERY_MS, () => void refresh($))
+    // keep warm: looks every 3s whether this chat's cache is about to lapse
+    $.clock.every(LOCAL_EVERY_MS, () => void warmIfDue($))
     $.clock.every(COLLAPSE_EVERY_MS, () => void syncCollapsed($))
     // whatever surface the session started on (a desktop chat may say none)
     $.clock.every(THEME_EVERY_MS, () => void syncTheme($))
@@ -693,6 +743,11 @@ export const register: Register = (on, options) => {
       await commitDraft($)
       bandActions($).toggleAuto(await read($, autoCompact))
     }
+    // a press on the keep-warm switch's pill (switch-hit.tsx, under its own key)
+    if (e.element === 'warmHit' && e.data === 'toggle') {
+      await commitDraft($)
+      bandActions($).toggleWarm()
+    }
     // a press on the bars, from their click region (bars-hit.tsx): expand or collapse
     if (e.element === 'barsHit' && e.data === 'toggle') {
       await commitDraft($)
@@ -717,6 +772,7 @@ export const register: Register = (on, options) => {
   // the region failed on this surface: the band redraws with a Button over the pill
   on('ui.fault', { component: 'AbovePrompt' }, async ($, e, next) => {
     if (e.element === 'autoHit') isHitDown = true
+    if (e.element === 'warmHit') isWarmHitDown = true
     if (e.element === 'barsHit') isBarsHitDown = true
     return next(e)
   })
@@ -820,7 +876,9 @@ export const register: Register = (on, options) => {
       t: stringsOf(await read($, language)),
       isHitDown,
       isBarsHitDown,
+      isWarmHitDown,
       cache: await read($, cacheWindow),
+      keepWarm: await read($, keepWarm),
     }, bandActions($))
   })
 }

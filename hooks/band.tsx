@@ -34,6 +34,10 @@ export type BandView = {
   isBarsHitDown?: boolean
   /** the prompt cache's last renewal; null before the first reply */
   cache?: CacheWindow | null
+  /** this chat keeps its prompt cache warm */
+  keepWarm?: boolean
+  /** the keep-warm switch's click region failed: a Button takes the press instead */
+  isWarmHitDown?: boolean
 }
 
 /** the band in one line, for the status line while it is off: "5h 7% · Weekly 57% · Context 38%" */
@@ -61,6 +65,7 @@ export type BandActions = {
   compact(): void
   answer(choice: 'now' | 'next'): void
   collapse(): Promise<void>
+  toggleWarm(): void
 }
 
 function tokens(n: number): string {
@@ -206,7 +211,9 @@ export function bandTree(table: ElementTable<'terminal' | 'desktop'>, surface: R
   // on a row of their own beneath it
   // (the desktop's letters are narrower than its cells: about 0.8 of one)
   // the controls: their two names, and 21 cells of switch, field, buttons and gaps
-  const CONTROLS = 22 + cellsOf(t.autoCompact) + cellsOf(t.compact)
+  const WARM_NAME = 'Keep cache warm'
+  // the keep-warm switch, its name and a gap: 7 more cells
+  const CONTROLS = 29 + cellsOf(t.autoCompact) + cellsOf(WARM_NAME) + cellsOf(t.compact)
   // the terminal draws its own hide control ([-]) over the band's top-right
   // corner: the first row keeps clear of it
   const HOST_HIDE = Svg ? 0 : 4
@@ -284,6 +291,28 @@ export function bandTree(table: ElementTable<'terminal' | 'desktop'>, surface: R
           <Text color={CLEAR}>%</Text>
         </Box>
       ) : null}
+      {/* keep warm: this chat's alone, drawn as the auto compact switch is */}
+      <Box flexDirection="row" alignItems="center" columnGap={1} marginLeft={isHeadBeside ? 2 : 0}>
+        {Svg ? (
+          <Box key="warmSwitch" width={SWITCH_CELLS} height={1} overflow="hidden">
+            <Box position="absolute" top={0} left={0} width={SWITCH_CELLS} height={1} alignItems="center" justifyContent="center">
+              <Svg alt={view.keepWarm ? 'Keep cache warm on' : 'Keep cache warm off'} source={switchSvg(view.keepWarm === true, c)} width={SWITCH_W} height={SWITCH_H} />
+            </Box>
+            <Box position="absolute" top={0} left={0}>
+              {view.isWarmHitDown ? (
+                <Button key="warm" label={SWITCH_PRESS} plain hover={{ backgroundColor: CLEAR }} onPress={() => act.toggleWarm()} />
+              ) : (
+                <Client key="warmHit" module="./switch-hit.tsx" width={SWITCH_CELLS} height={1} />
+              )}
+            </Box>
+          </Box>
+        ) : (
+          <Button key="warm" label={view.keepWarm ? '●' : '○'} plain onPress={() => act.toggleWarm()} />
+        )}
+        <Button key="warmLabel" plain onPress={() => act.toggleWarm()}>
+          <Text color={view.keepWarm ? undefined : c.muted}>{WARM_NAME}</Text>
+        </Button>
+      </Box>
       <Box key="compactBox" marginLeft={isHeadBeside ? 2 : 0}>
         <Button key="compact" label={t.compact} hover={{ backgroundColor: c.compactLit }} onPress={() => act.compact()} />
       </Box>
@@ -423,7 +452,7 @@ export function bandTree(table: ElementTable<'terminal' | 'desktop'>, surface: R
             <Text bold color={cacheColor}>{!cache ? 'no reply yet' : cacheLeft === 0 ? 'expired' : `${cacheValue} left`}</Text>
           </Box>
         </Box>
-        <Text color={c.muted}>{cache ? `${cacheTtl} cache, renewed by each reply` : 'starts with the next reply'}</Text>
+        <Text color={c.muted}>{cache ? (view.keepWarm ? `${cacheTtl} cache, kept warm in this chat` : `${cacheTtl} cache, renewed by each reply`) : 'starts with the next reply'}</Text>
       </Box>
     </Box>
   )

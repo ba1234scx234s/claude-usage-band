@@ -52,6 +52,8 @@ declare module 'claude-code' {
       openRows: string[]
       /** the prompt cache's last renewal; null before the first reply */
       cache: CacheWindow | null
+      /** keep this chat's prompt cache warm: re-read it just before it lapses (per chat) */
+      keepWarm: boolean
     }
   }
 }
