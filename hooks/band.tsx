@@ -179,13 +179,17 @@ const WARM_NAME = 'Keep cache warm'
 /** The two switches: Auto compact (with its % field) and Keep cache warm. The desktop draws
  * them under the prompt, at the left of its footer; the terminal in the band's controls. */
 export type SwitchesView = Pick<BandView, 'auto' | 'tick' | 'drawnAt' | 't' | 'isLight' | 'keepWarm' | 'isHitDown' | 'isWarmHitDown'>
-export function switchesRow(table: ElementTable<'terminal' | 'desktop'>, surface: RenderSurface, view: SwitchesView, act: BandActions) {
+type SwitchArgs = [table: ElementTable<'terminal' | 'desktop'>, surface: RenderSurface, view: SwitchesView, act: BandActions]
+
+/** Auto compact: its switch, its name and (on) its % field. On the desktop it sits under the
+ * Context bar of the expanded band; on the terminal with the band's controls. */
+export function autoControl(...[table, surface, view, act]: SwitchArgs) {
   const { auto, tick, drawnAt, t } = view
   const { Box, Text, Button, Input, Client } = table
   const Svg = surface === 'desktop' && 'Svg' in table ? table.Svg : undefined
   const c = surface === 'desktop' && view.isLight ? LIGHT : DARK
   return (
-    <Box flexDirection="row" alignItems="center" columnGap={1} flexShrink={0} flexWrap="wrap">
+    <Box flexDirection="row" alignItems="center" columnGap={1} flexShrink={0}>
       {/* auto compact: the switch (the press), its name, the % field beside it,
           then a wide gap so the field reads as the switch's, not Compact's */}
       {Svg ? (
@@ -238,8 +242,19 @@ export function switchesRow(table: ElementTable<'terminal' | 'desktop'>, surface
           <Text color={CLEAR}>%</Text>
         </Box>
       ) : null}
-      {/* keep warm: this chat's alone, drawn as the auto compact switch is */}
-      <Box flexDirection="row" alignItems="center" columnGap={1} marginLeft={2}>
+    </Box>
+  )
+}
+
+/** Keep cache warm: its switch and its name, this chat's alone. On the desktop it sits under
+ * the Cache bar of the expanded band; on the terminal with the band's controls. */
+export function warmControl(...[table, surface, view, act]: SwitchArgs) {
+  const { Box, Text, Button, Client } = table
+  const Svg = surface === 'desktop' && 'Svg' in table ? table.Svg : undefined
+  const c = surface === 'desktop' && view.isLight ? LIGHT : DARK
+  // drawn as the auto compact switch is
+  return (
+      <Box flexDirection="row" alignItems="center" columnGap={1}>
         {Svg ? (
           <Box key="warmSwitch" width={SWITCH_CELLS} height={1} overflow="hidden">
             <Box position="absolute" top={0} left={0} width={SWITCH_CELLS} height={1} alignItems="center" justifyContent="center">
@@ -260,6 +275,16 @@ export function switchesRow(table: ElementTable<'terminal' | 'desktop'>, surface
           <Text color={view.keepWarm ? undefined : c.muted}>{WARM_NAME}</Text>
         </Button>
       </Box>
+  )
+}
+
+/** Both switches in one row: the terminal's band controls. */
+export function switchesRow(...args: SwitchArgs) {
+  const { Box } = args[0]
+  return (
+    <Box flexDirection="row" alignItems="center" columnGap={1} flexShrink={0} flexWrap="wrap">
+      {autoControl(...args)}
+      <Box marginLeft={2}>{warmControl(...args)}</Box>
     </Box>
   )
 }
@@ -471,6 +496,8 @@ export function bandTree(table: ElementTable<'terminal' | 'desktop'>, surface: R
         </Box>
         <Text color={c.muted}>{cache ? (view.keepWarm ? `${cacheTtl} cache, kept warm in this chat` : `${cacheTtl} cache, renewed by each reply`) : 'starts with the next reply'}</Text>
       </Box>
+      {/* the desktop: Keep cache warm under the Cache bar (the terminal has it in the controls) */}
+      {Svg ? <Box marginTop={gap}>{warmControl(table, surface, view, act)}</Box> : null}
     </Box>
   )
   const usedText = <Text bold color={contextColor}>{fmt(t.used, { percent: Math.round(snap.percent) })}</Text>
@@ -504,6 +531,8 @@ export function bandTree(table: ElementTable<'terminal' | 'desktop'>, surface: R
             <Text color={c.muted}>{tokens(cat.tokens)}</Text>
           </Box>
         ))}
+      {/* the desktop: Auto compact under the Context bar (the terminal has it in the controls) */}
+      {Svg ? <Box marginTop={gap}>{autoControl(table, surface, view, act)}</Box> : null}
       {cacheBlock}
     </Box>
   )
@@ -606,9 +635,10 @@ export function bandTree(table: ElementTable<'terminal' | 'desktop'>, surface: R
     </Box>
   )
 
-  // On the desktop the bars themselves expand and collapse the band: an empty region
-  // over them takes the click (bars-hit.tsx). Collapsed, the band is the bars alone;
-  // the headline and the controls come with the expanded view
+  // On the desktop a click on the collapsed bars expands the band: an empty region over
+  // them takes the click (bars-hit.tsx). Collapsed, the band is the bars alone; the
+  // headline, Compact and the switches come with the expanded view, where ▼ collapses it
+  // (no region there: it would lie over the switches under the Context and Cache bars)
   const isBarsTap = Svg !== undefined && !view.isBarsHitDown
   const tappable = (content: typeof collapsedBlock) =>
     isBarsTap ? (
@@ -651,10 +681,10 @@ export function bandTree(table: ElementTable<'terminal' | 'desktop'>, surface: R
         )
       ) : null}
 
-      {tappable(
-        collapsed ? (
-          collapsedBlock
-        ) : isSplit ? (
+      {collapsed ? (
+        tappable(collapsedBlock)
+      ) : (
+        isSplit ? (
           <Box flexDirection="row" columnGap={4}>
             {limitsBlock}
             {contextBlock}
@@ -665,7 +695,7 @@ export function bandTree(table: ElementTable<'terminal' | 'desktop'>, surface: R
             <Text> </Text>
             {contextBlock}
           </Box>
-        ),
+        )
       )}
     </Box>
   )

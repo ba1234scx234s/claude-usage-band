@@ -91,27 +91,10 @@ function answerRest(on: On, status: (string | undefined)[]) {
 const MEASURE = { context: { window: 1_000_000, tokens: 158_000, percent: 16 }, rateLimits: [] }
 
 // the % field is drawn afresh after every set, under a new key
-// On the desktop the two switches sit under the prompt (PromptHint), the rest in the band:
-// one handle over both, so a test finds, clicks and types in either as the person would
-const HINT_PROPS = { isDraft: false, isWorking: false, hint: '? for shortcuts' }
+// the band, on a surface
 type Mounted = Awaited<ReturnType<Parameters<Parameters<typeof test>[1]>[0]['ui']['mount']>>
-async function mountBand($: Parameters<Parameters<typeof test>[1]>[0], surface: 'terminal' | 'desktop', props: typeof PROPS): Promise<Mounted> {
-  const ui = await $.ui.mount({ plugin: 'usage-quota', surface, component: 'AbovePrompt', props })
-  if (surface !== 'desktop') return ui
-  const hint = await $.ui.mount({ plugin: 'usage-quota', surface, component: 'PromptHint', props: HINT_PROPS as never })
-  const inHint = (key: unknown) => /^(autoHit|warmHit|autoAt|auto$|autoLabel|warm$|warmLabel)/.test(String(key))
-  return {
-    ...ui,
-    find: (async (q: never) => (await ui.find(q)) ?? (await hint.find(q))) as Mounted['find'],
-    findAll: (async (q: never) => [...(await ui.findAll(q)), ...(await hint.findAll(q))]) as Mounted['findAll'],
-    pointer: ((ev: { in?: string }) => (inHint(ev.in) ? hint.pointer(ev as never) : ui.pointer(ev as never))) as Mounted['pointer'],
-    press: ((t: { key: string }) => (inHint(t.key) ? hint.press(t as never) : ui.press(t as never))) as Mounted['press'],
-    input: ((i: { key: string }) => (inHint(i.key) ? hint.input(i as never) : ui.input(i as never))) as Mounted['input'],
-    unmount: (async () => {
-      await hint.unmount()
-      await ui.unmount()
-    }) as Mounted['unmount'],
-  }
+function mountBand($: Parameters<Parameters<typeof test>[1]>[0], surface: 'terminal' | 'desktop', props: typeof PROPS): Promise<Mounted> {
+  return $.ui.mount({ plugin: 'usage-quota', surface, component: 'AbovePrompt', props })
 }
 
 async function fieldKey(ui: { find: (q: { type: 'Input' }) => Promise<{ props: { key?: string } } | undefined> }): Promise<string> {
@@ -612,9 +595,10 @@ test('the arrow collapses the band to one row of three bars, and back', async ($
     else await ui.press({ key: 'collapse' })
     expect(await ui.find({ text: 'Messages' })).toBeDefined()
     expect(await ui.find({ type: 'Button', label: 'Compact' })).toBeDefined()
-    // and a click on the expanded bars collapses it again
+    // expanded, ▼ collapses it again (the bars take no click there: the switches sit under them)
     if (surface === 'desktop') {
-      await ui.pointer(BARS)
+      expect(await ui.find({ type: 'Client', key: 'barsHit' } as never)).toBeUndefined()
+      await ui.press({ key: 'collapse' })
       expect(await ui.find({ text: 'Messages' })).toBeUndefined()
       await ui.pointer(BARS)
     }
@@ -1357,24 +1341,25 @@ test('keep cache warm: switched on in a chat, it re-reads the cache just before 
   await ui.unmount()
 })
 
-test('on the desktop the two switches sit under the prompt, before the footer\'s own line, and not in the band', async ($, on) => {
-  // the footer's own line, as the engine draws it (answered ahead of the world's defaults)
-  on('ui.render', { component: 'PromptHint' }, () => ({ type: 'Text', props: {}, children: ['? for shortcuts'] }) as never)
+test('on the desktop, expanded, Auto compact sits under the Context bar and Keep cache warm under the Cache bar', async ($, on) => {
   startWorld(on, { value: 16 }, [])
   await $.session.start({ cwd: '.', surface: 'desktop', isInteractive: true })
-  const band = await $.ui.mount({ plugin: 'usage-quota', surface: 'desktop', component: 'AbovePrompt', props: PROPS })
-  const hint = await $.ui.mount({ plugin: 'usage-quota', surface: 'desktop', component: 'PromptHint', props: HINT_PROPS as never })
-  expect((await hint.findAll({ type: 'Svg' })).map(s => s.props.alt)).toEqual(['Auto compact off', 'Keep cache warm off'])
-  // the footer's own line stays, after the switches
-  const texts = (await hint.findAll({ type: 'Text' })).map(t => t.text)
-  expect(texts.indexOf('Keep cache warm')).toBeLessThan(texts.indexOf('? for shortcuts'))
-  // the band keeps Compact and the arrow, no switches
-  expect((await band.findAll({ type: 'Svg' })).some(s => /^(Auto compact|Keep cache warm)/.test(String(s.props.alt)))).toBe(false)
-  expect((await band.findAll({ type: 'Button' })).some(b => b.props.label === 'Compact')).toBe(true)
-  // a click in the footer turns auto compact on there, its % field beside it
-  await hint.pointer({ type: 'down', x: 1, y: 0, button: 'left', in: 'autoHit' })
-  expect(await hint.find({ type: 'Svg', alt: 'Auto compact on' })).toBeDefined()
-  expect(await hint.find({ type: 'Input' })).toBeDefined()
-  await hint.unmount()
-  await band.unmount()
+  const ui = await mountBand($, 'desktop', PROPS)
+  // expanded: both switches, after the context's groups, Keep cache warm after the Cache line
+  expect((await ui.findAll({ type: 'Svg' })).filter(s => /^(Auto compact|Keep cache warm)/.test(String(s.props.alt))).map(s => s.props.alt)).toEqual(['Auto compact off', 'Keep cache warm off'])
+  const texts = (await ui.findAll({ type: 'Text' })).map(t => String(t.text))
+  const at = (text: string) => texts.findIndex(t => t === text)
+  expect(at('Other')).toBeLessThan(at('Auto compact'))
+  expect(at('Auto compact')).toBeLessThan(at('Cache'))
+  expect(at('Cache')).toBeLessThan(at('Keep cache warm'))
+  // the switches work where they are, the % field beside Auto compact
+  await ui.pointer({ type: 'down', x: 1, y: 0, button: 'left', in: 'autoHit' })
+  expect(await ui.find({ type: 'Svg', alt: 'Auto compact on' })).toBeDefined()
+  expect(await ui.find({ type: 'Input' })).toBeDefined()
+  await ui.pointer({ type: 'down', x: 1, y: 0, button: 'left', in: 'warmHit' })
+  expect(await ui.find({ type: 'Svg', alt: 'Keep cache warm on' })).toBeDefined()
+  // collapsed: the bars alone, no switches
+  await ui.press({ key: 'collapse' })
+  expect((await ui.findAll({ type: 'Svg' })).some(s => /^(Auto compact|Keep cache warm)/.test(String(s.props.alt)))).toBe(false)
+  await ui.unmount()
 })
