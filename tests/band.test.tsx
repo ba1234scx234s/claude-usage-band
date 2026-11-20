@@ -574,8 +574,8 @@ test('the arrow collapses the band to one row of three bars, and back', async ($
     expect(times.map(t => t.text)).toEqual(['5h', '3d'])
     for (const t of times) expect(t.props.color).toBe(GREY)
     expect(await ui.find({ text: 'Context' })).toBeDefined()
-    // and Context with its whole window
-    expect(await ui.find({ type: 'Text', text: '1M' })).toBeDefined()
+    // and Context by its name alone, no window size
+    expect(await ui.find({ type: 'Text', text: '1M' })).toBeUndefined()
     expect(await ui.find({ text: '16%' })).toBeDefined()
     expect(await ui.find({ text: 'Messages' })).toBeUndefined()
     expect(await ui.find({ text: /by reset/ })).toBeUndefined()

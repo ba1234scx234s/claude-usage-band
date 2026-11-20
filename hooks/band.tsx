@@ -473,8 +473,8 @@ export function bandTree(table: ElementTable<'terminal' | 'desktop'>, surface: R
       percent: f.percent, value: `${Math.round(f.percent)}%`, isCache: false,
       color: limitColor(f.percent), segments: limitSegments(f), f: f as Forecast | undefined,
     })),
-    // Context with the whole window, as the limits have their time: 1M, 200k
-    { label: t.context, short: t.context, until: tokens(snap.window), percent: snap.percent, value: `${Math.round(snap.percent)}%`, isCache: false, color: contextColor, segments: contextSegments, f: undefined as Forecast | undefined },
+    // Context by its name alone, no window size
+    { label: t.context, short: t.context, until: '', percent: snap.percent, value: `${Math.round(snap.percent)}%`, isCache: false, color: contextColor, segments: contextSegments, f: undefined as Forecast | undefined },
     // the cache by its name alone, its time left where the others have a %
     { label: 'Cache', short: 'Cache', until: '', percent: cacheUsed * 100, value: cacheValue, isCache: true, color: cacheColor, segments: cacheSegments, f: undefined as Forecast | undefined },
   ]
