@@ -2,7 +2,7 @@
 // surface's elements and hands them here (the engine lets `$` cross no import).
 import type { ElementTable, RenderSurface } from 'claude-code'
 
-import type { AutoCompact, Category, Snapshot, Spend } from '../types'
+import type { AutoCompact, CacheWindow, Category, Snapshot, Spend } from '../types'
 import { DARK, LIGHT, rampColor } from './colors'
 import type { Palette, Ramp } from './colors'
 import { duration, forecast, headline, markerOf, order, windowName, WINDOWS } from './forecast'
@@ -32,6 +32,8 @@ export type BandView = {
   isHitDown?: boolean
   // the bars' click region failed: the band keeps its header and ▲ button collapsed
   isBarsHitDown?: boolean
+  /** the prompt cache's last renewal; null before the first reply */
+  cache?: CacheWindow | null
 }
 
 /** the band in one line, for the status line while it is off: "5H 7% · Weekly 57% · Context 38%" */
@@ -386,6 +388,36 @@ export function bandTree(table: ElementTable<'terminal' | 'desktop'>, surface: R
   )
 
   const contextColor = rampColor(snap.percent, view.contextRamp, c)
+
+  // the prompt cache: the time left before it lapses, as a bar that empties. Green while
+  // warm, yellow in its last fifth, grey once cold (the next message re-sends it all)
+  const cache = view.cache ?? null
+  const cacheLeft = cache ? Math.max(0, cache.at + cache.ttlMs - now) : 0
+  const cacheShare = cache ? cacheLeft / cache.ttlMs : 0
+  const cacheColor = !cache || cacheLeft === 0 ? c.muted : cacheShare <= 0.2 ? c.yellow : c.switchOn
+  const cacheMins = Math.ceil(cacheLeft / 60_000)
+  const cacheValue = !cache ? '–' : cacheLeft === 0 ? 'cold' : cacheMins >= 60 ? '1h' : `${cacheMins}m`
+  const cacheTtl = cache ? (cache.ttlMs >= 3_600_000 ? '1h' : '5m') : ''
+  const cacheSegments: Segment[] = [
+    { color: cacheColor, share: cacheShare * 100 },
+    { color: c.track, share: 100 - cacheShare * 100 },
+  ]
+  const cacheAlt = `Cache: ${!cache ? 'no reply yet' : cacheLeft === 0 ? 'expired' : `${cacheValue} left`}`
+  const cacheBlock = (
+    <Box flexDirection="column">
+      <Text> </Text>
+      {bar(cacheAlt, cacheSegments, column)}
+      <Box flexDirection="row" justifyContent="space-between" columnGap={2}>
+        <Box flexDirection="row">
+          <Text bold>Cache</Text>
+          <Box marginLeft={2}>
+            <Text bold color={cacheColor}>{!cache ? 'no reply yet' : cacheLeft === 0 ? 'expired' : `${cacheValue} left`}</Text>
+          </Box>
+        </Box>
+        <Text color={c.muted}>{cache ? `${cacheTtl} cache, renewed by each reply` : 'starts with the next reply'}</Text>
+      </Box>
+    </Box>
+  )
   const usedText = <Text bold color={contextColor}>{fmt(t.used, { percent: Math.round(snap.percent) })}</Text>
   const freeText = <Text color={c.muted}>{fmt(t.free, { free: tokens(free), window: tokens(snap.window) })}</Text>
   const contextName = (
@@ -417,6 +449,7 @@ export function bandTree(table: ElementTable<'terminal' | 'desktop'>, surface: R
             <Text color={c.muted}>{tokens(cat.tokens)}</Text>
           </Box>
         ))}
+      {cacheBlock}
     </Box>
   )
 
@@ -428,11 +461,13 @@ export function bandTree(table: ElementTable<'terminal' | 'desktop'>, surface: R
       short: windowName(f.kind, t, true),
       // not running yet: the whole window, the countdown it will start from (5h, 7d)
       until: f.status === 'idle' || !Number.isFinite(f.resetsAt) ? duration(WINDOWS[f.kind]?.ms ?? 0) : duration(f.resetsAt - now),
-      percent: f.percent,
+      percent: f.percent, value: `${Math.round(f.percent)}%`, isCache: false,
       color: limitColor(f.percent), segments: limitSegments(f), f: f as Forecast | undefined,
     })),
     // Context with the whole window, as the limits have their time: 1M, 200k
-    { label: t.context, short: t.context, until: tokens(snap.window), percent: snap.percent, color: contextColor, segments: contextSegments, f: undefined as Forecast | undefined },
+    { label: t.context, short: t.context, until: tokens(snap.window), percent: snap.percent, value: `${Math.round(snap.percent)}%`, isCache: false, color: contextColor, segments: contextSegments, f: undefined as Forecast | undefined },
+    // the cache with its lifetime, its time left where the others have a %
+    { label: 'Cache', short: 'Cache', until: cacheTtl, percent: cacheShare * 100, value: cacheValue, isCache: true, color: cacheColor, segments: cacheSegments, f: undefined as Forecast | undefined },
   ]
   const nameOf = (item: (typeof compactItems)[number]) => (
     <Box flexDirection="row" columnGap={1} flexShrink={0}>
@@ -452,16 +487,19 @@ export function bandTree(table: ElementTable<'terminal' | 'desktop'>, surface: R
   const slotOf = (item: (typeof compactItems)[number]) => cellsOf(item.short) + 1 + TIME_CELLS + 1 + limitBar + 1 + '100%'.length
   // between the slots: enough that a 100% never runs into the next name
   const GAP = 2
-  const slotsWidth = compactItems.filter(item => item.f).reduce((sum, item) => sum + slotOf(item) + GAP, 0)
-  const contextItem = compactItems[compactItems.length - 1]!
-  const contextBar = Math.max(6, width - slotsWidth - nameLength(contextItem) - 1 - 1 - `${Math.round(contextItem.percent)}%`.length)
+  // the cache's slot: its name, its lifetime, a shorter bar, room for "cold"
+  const cacheBar = Math.max(6, Math.floor(limitBar / 2))
+  const cacheSlot = (item: (typeof compactItems)[number]) => cellsOf(item.short) + 1 + 2 + 1 + cacheBar + 1 + 'cold'.length
+  const slotsWidth = compactItems.filter(item => item.f || item.isCache).reduce((sum, item) => sum + (item.isCache ? cacheSlot(item) : slotOf(item)) + GAP, 0)
+  const contextItem = compactItems.find(item => !item.f && !item.isCache)!
+  const contextBar = Math.max(6, width - slotsWidth - nameLength(contextItem) - 1 - 1 - contextItem.value.length)
   const collapsedBlock = isOneRow ? (
     <Box flexDirection="row" columnGap={GAP}>
       {compactItems.map(item => {
-        const pct = `${Math.round(item.percent)}%`
+        const pct = item.value
         const isContext = item === contextItem
         return (
-          <Box flexDirection="row" width={isContext ? undefined : slotOf(item)} flexGrow={isContext ? 1 : 0} flexShrink={isContext ? 1 : 0}>
+          <Box flexDirection="row" width={isContext ? undefined : item.isCache ? cacheSlot(item) : slotOf(item)} flexGrow={isContext ? 1 : 0} flexShrink={isContext ? 1 : 0}>
             <Box marginRight={1} flexShrink={0}>
               {nameOf(item)}
             </Box>
@@ -472,7 +510,7 @@ export function bandTree(table: ElementTable<'terminal' | 'desktop'>, surface: R
                 <Svg alt={fmt(t.barUsed, { label: item.label, percent: Math.round(item.percent) })} source={barSvg(item.segments, 4000)} height={BAR_PX} />
               </Box>
             ) : (
-              bar(fmt(t.barUsed, { label: item.label, percent: Math.round(item.percent) }), item.segments, isContext ? contextBar : limitBar, item.f)
+              bar(item.isCache ? cacheAlt : fmt(t.barUsed, { label: item.label, percent: Math.round(item.percent) }), item.segments, isContext ? contextBar : item.isCache ? cacheBar : limitBar, item.f)
             )}
             <Box marginLeft={1} flexShrink={0} flexGrow={isContext && !Svg ? 1 : 0} justifyContent={isContext ? 'flex-end' : undefined}>
               <Text bold color={item.color}>{pct}</Text>
@@ -495,7 +533,7 @@ export function bandTree(table: ElementTable<'terminal' | 'desktop'>, surface: R
               </Box>
               {bar(fmt(t.barUsed, { label: item.label, percent: Math.round(item.percent) }), item.segments, Math.max(6, width - nameCells - 6), item.f)}
               <Box marginLeft={2} flexShrink={0}>
-                <Text bold color={item.color}>{`${Math.round(item.percent)}%`}</Text>
+                <Text bold color={item.color}>{item.value}</Text>
               </Box>
             </Box>
           ))}

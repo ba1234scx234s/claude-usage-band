@@ -1,7 +1,7 @@
 import { atom, read, update } from 'claude-code'
 import type { EngineInterface, Register } from 'claude-code'
 
-import type { AutoCompact, Hold, Limit, PaceOf, Snapshot, Spend } from '../types'
+import type { AutoCompact, CacheWindow, Hold, Limit, PaceOf, Snapshot, Spend } from '../types'
 import { stepAlerts } from './alerts'
 import type { Alerts } from './alerts'
 import { bandTree, summary } from './band'
@@ -44,6 +44,10 @@ const spend = atom({ plugin: 'usage-quota', key: 'spend' } as const, { chat: '',
 const language = atom({ plugin: 'usage-quota', key: 'language' } as const, 'en')
 // the history pane's rows unfolded to show their chats
 const openRows = atom({ plugin: 'usage-quota', key: 'openRows' } as const, [] as string[])
+// the prompt cache: renewed by every main-chat request that reads or writes it, for 1h or 5m
+const cacheWindow = atom({ plugin: 'usage-quota', key: 'cache' } as const, null as CacheWindow | null)
+const CACHE_HOUR_MS = 3_600_000
+const CACHE_5M_MS = 300_000
 
 // the setting's language, else the app's, else the shell's (LC_ALL, LANG), else English
 let shellLocale: string | undefined
@@ -697,6 +701,19 @@ export const register: Register = (on, options) => {
     return next(e)
   })
 
+  // each main-chat request: the cache lifetime counts from when it went out, for as long
+  // as the API says it wrote (1h or 5m); a request that only read renews the last lifetime
+  on('turn.step', async function* ($, e, next) {
+    const at = await $.clock.now()
+    const r = yield* next(e)
+    const u = r?.usage
+    if (!e.agentId && u && (u.cache_read_input_tokens > 0 || u.cache_creation_input_tokens > 0)) {
+      const ttl = (u.ephemeral_1h_input_tokens ?? 0) > 0 ? CACHE_HOUR_MS : (u.ephemeral_5m_input_tokens ?? 0) > 0 ? CACHE_5M_MS : undefined
+      await update($, cacheWindow, prev => ({ at, ttlMs: ttl ?? prev?.ttlMs ?? CACHE_HOUR_MS }))
+    }
+    return r
+  })
+
   // the region failed on this surface: the band redraws with a Button over the pill
   on('ui.fault', { component: 'AbovePrompt' }, async ($, e, next) => {
     if (e.element === 'autoHit') isHitDown = true
@@ -803,6 +820,7 @@ export const register: Register = (on, options) => {
       t: stringsOf(await read($, language)),
       isHitDown,
       isBarsHitDown,
+      cache: await read($, cacheWindow),
     }, bandActions($))
   })
 }

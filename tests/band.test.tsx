@@ -1208,3 +1208,60 @@ test('Context stays grey to 25%, turns yellow by 50% and red by 80%', async ($, 
     await ui.unmount()
   }
 })
+
+test('the cache bar counts down from each main-chat reply, for the lifetime the API wrote', async ($, on) => {
+  const clock = startWorld(on, { value: 16 }, [])
+  let ttl: '1h' | '5m' | 'read' = '1h'
+  on('turn.step', async function* (_$, e) {
+    const usage = {
+      input_tokens: 10, output_tokens: 10, model: 'claude',
+      cache_read_input_tokens: 1000,
+      cache_creation_input_tokens: ttl === 'read' ? 0 : 500,
+      ...(ttl === 'read' ? {} : { ephemeral_1h_input_tokens: ttl === '1h' ? 500 : 0, ephemeral_5m_input_tokens: ttl === '5m' ? 500 : 0 }),
+    }
+    return { turnId: e.turnId, index: e.index, answer: '', toolUses: [], stopReason: 'end_turn', usage } as never
+  })
+  const step = async (agentId?: string) => {
+    const s = $.turn.step({ turnId: 't1', index: 0, model: 'claude', messageCount: 1, ...(agentId ? { agentId } : {}) } as never)
+    for await (const _ of s) void _
+  }
+  // the band's timers tick every half second: the clock moves a minute at a time
+  const wait = async (minutes: number) => {
+    for (let i = 0; i < minutes; i++) await clock.advance(60_000)
+  }
+  await $.session.start({ cwd: '.', surface: 'desktop', isInteractive: true })
+  const ui = await $.ui.mount({ plugin: 'usage-quota', surface: 'desktop', component: 'AbovePrompt', props: PROPS })
+  // before any reply: nothing to count down
+  expect(await ui.find({ text: 'no reply yet' })).toBeDefined()
+
+  await step()
+  await wait(1)
+  expect(await ui.find({ text: '59m left' })).toBeDefined()
+  expect(await ui.find({ text: '1h cache, renewed by each reply' })).toBeDefined()
+
+  // a subagent's request renews nothing on the main chat's cache
+  await wait(20)
+  await step('sub-1')
+  await wait(1)
+  expect(await ui.find({ text: '38m left' })).toBeDefined()
+
+  // a request that only read renews the lifetime it had
+  ttl = 'read'
+  await step()
+  await wait(1)
+  expect(await ui.find({ text: '59m left' })).toBeDefined()
+
+  // past its hour it is cold
+  await wait(60)
+  expect(await ui.find({ text: 'expired' })).toBeDefined()
+
+  // a 5 minute write, collapsed: the Cache slot shows its lifetime and the time left
+  ttl = '5m'
+  await step()
+  await wait(1)
+  await ui.press({ key: 'collapse' })
+  expect(await ui.find({ type: 'Text', text: 'Cache' })).toBeDefined()
+  expect(await ui.find({ type: 'Text', text: '5m' })).toBeDefined()
+  expect(await ui.find({ type: 'Text', text: '4m' })).toBeDefined()
+  await ui.unmount()
+})

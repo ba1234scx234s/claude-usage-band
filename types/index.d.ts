@@ -27,6 +27,9 @@ export type Hold = { chat: string; waits: boolean; stuck: boolean }
 /** this chat's share of the 5 hour limit: in all, by its last reply, and the readings its running turn started from */
 export type Spend = { chat: string; total: number; last: number | null; from: Limit[] | null }
 
+/** the prompt cache: when the main chat's last request that read or wrote it went out, and how long it holds */
+export type CacheWindow = { at: number; ttlMs: number }
+
 declare module 'claude-code' {
   interface PluginState {
     'usage-quota': {
@@ -47,6 +50,8 @@ declare module 'claude-code' {
       theme: 'dark' | 'light'
       /** the history pane's rows unfolded to show their chats, by row key */
       openRows: string[]
+      /** the prompt cache's last renewal; null before the first reply */
+      cache: CacheWindow | null
     }
   }
 }
