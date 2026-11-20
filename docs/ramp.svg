@@ -1,0 +1,64 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="340" viewBox="0 0 1200 340" font-family="Inter, -apple-system, 'Segoe UI', Helvetica, Arial, sans-serif">
+<title>Grey until it matters: 5 Hour and Weekly bars stay grey up to 50%, turn yellow by 75% and red by 95%; Context turns at 25%, 50% and 80%</title>
+<style>
+.grow{transform-box:fill-box;transform-origin:left center;animation:grow 10s cubic-bezier(.2,.7,.2,1) infinite}
+.fade{animation:fade 10s ease infinite}
+.d1{animation-delay:.12s}.d2{animation-delay:.24s}.d3{animation-delay:.36s}
+.d4{animation-delay:.2s}.d5{animation-delay:.32s}.d6{animation-delay:.44s}.d7{animation-delay:.56s}
+@keyframes grow{0%{transform:scaleX(0)}16%,100%{transform:scaleX(1)}}
+@keyframes fade{0%,6%{opacity:0}16%,100%{opacity:1}}
+@media (prefers-reduced-motion:reduce){.grow,.fade{animation:none}}
+</style>
+<defs><clipPath id="track"><rect x="24" y="0" width="290" height="8" rx="4"/></clipPath></defs>
+<rect width="1200" height="340" rx="16" fill="#151515"/>
+<text x="40" y="70" fill="#efefec" font-size="30" font-weight="600">Grey until it matters</text>
+<text x="40" y="102" fill="#9a9a96" font-size="16">Grey up to the first %, yellow at the second, red at the third. Set the stops in /quota-settings.</text>
+
+<g transform="translate(40,132)">
+  <rect x=".5" y=".5" width="547" height="179" rx="12" fill="#212121" stroke="#2c2c2b"/>
+  <text x="24" y="36" fill="#9a9a96" font-size="12.5" letter-spacing="2.2">5 HOUR &amp; WEEKLY</text>
+  <text x="524" y="36" fill="#9a9a96" font-size="12.5" letter-spacing="2.2" text-anchor="end">50 · 75 · 95</text>
+  <g transform="translate(0,62)">
+    <rect x="24" width="290" height="8" rx="4" fill="#333332"/><rect class="grow" x="24" width="87" height="8" rx="4" fill="#9a9a96"/>
+    <text class="fade" x="334" y="9" fill="#9a9a96" font-size="16" font-weight="600">30%</text><text class="fade" x="428" y="9" fill="#9a9a96" font-size="15">calm</text>
+  </g>
+  <g transform="translate(0,92)">
+    <rect x="24" width="290" height="8" rx="4" fill="#333332"/><rect class="grow d1" x="24" width="165" height="8" rx="4" fill="#aca285"/>
+    <text class="fade d1" x="334" y="9" fill="#aca285" font-size="16" font-weight="600">57%</text><text class="fade d1" x="428" y="9" fill="#9a9a96" font-size="15">warming up</text>
+  </g>
+  <g transform="translate(0,122)">
+    <rect x="24" width="290" height="8" rx="4" fill="#333332"/><rect class="grow d2" x="24" width="218" height="8" rx="4" fill="#e5b54a"/>
+    <text class="fade d2" x="334" y="9" fill="#e5b54a" font-size="16" font-weight="600">75%</text><text class="fade d2" x="428" y="9" fill="#9a9a96" font-size="15">heads up</text>
+  </g>
+  <g transform="translate(0,152)">
+    <rect x="24" width="290" height="8" rx="4" fill="#333332"/><rect class="grow d3" x="24" width="278" height="8" rx="4" fill="#e5534b"/>
+    <text class="fade d3" x="334" y="9" fill="#e5534b" font-size="16" font-weight="600">96%</text><text class="fade d3" x="428" y="9" fill="#9a9a96" font-size="15">slow down</text>
+  </g>
+</g>
+
+<g transform="translate(612,132)">
+  <rect x=".5" y=".5" width="547" height="179" rx="12" fill="#212121" stroke="#2c2c2b"/>
+  <text x="24" y="36" fill="#9a9a96" font-size="12.5" letter-spacing="2.2">CONTEXT</text>
+  <text x="524" y="36" fill="#9a9a96" font-size="12.5" letter-spacing="2.2" text-anchor="end">25 · 50 · 80</text>
+  <g transform="translate(0,62)">
+    <rect x="24" width="290" height="8" rx="4" fill="#333332"/>
+    <g clip-path="url(#track)"><g class="grow d4"><rect x="24" width="35" height="8" fill="#78d0ea"/><rect x="59" width="4" height="8" fill="#a48ef2"/><rect x="63" width="14" height="8" fill="#4d4d4a"/></g></g>
+    <text class="fade d4" x="334" y="9" fill="#9a9a96" font-size="16" font-weight="600">15% used</text><text class="fade d4" x="428" y="9" fill="#9a9a96" font-size="15">calm</text>
+  </g>
+  <g transform="translate(0,92)">
+    <rect x="24" width="290" height="8" rx="4" fill="#333332"/>
+    <g clip-path="url(#track)"><g class="grow d5"><rect x="24" width="74" height="8" fill="#78d0ea"/><rect x="98" width="9" height="8" fill="#a48ef2"/><rect x="107" width="19" height="8" fill="#4d4d4a"/></g></g>
+    <text class="fade d5" x="334" y="9" fill="#aca285" font-size="16" font-weight="600">32% used</text><text class="fade d5" x="428" y="9" fill="#9a9a96" font-size="15">warming up</text>
+  </g>
+  <g transform="translate(0,122)">
+    <rect x="24" width="290" height="8" rx="4" fill="#333332"/>
+    <g clip-path="url(#track)"><g class="grow d6"><rect x="24" width="116" height="8" fill="#78d0ea"/><rect x="140" width="15" height="8" fill="#a48ef2"/><rect x="155" width="24" height="8" fill="#4d4d4a"/></g></g>
+    <text class="fade d6" x="334" y="9" fill="#e5b54a" font-size="16" font-weight="600">50% used</text><text class="fade d6" x="428" y="9" fill="#9a9a96" font-size="15">heads up</text>
+  </g>
+  <g transform="translate(0,152)">
+    <rect x="24" width="290" height="8" rx="4" fill="#333332"/>
+    <g clip-path="url(#track)"><g class="grow d7"><rect x="24" width="190" height="8" fill="#78d0ea"/><rect x="214" width="24" height="8" fill="#a48ef2"/><rect x="238" width="33" height="8" fill="#4d4d4a"/></g></g>
+    <text class="fade d7" x="334" y="9" fill="#e5534b" font-size="16" font-weight="600">82% used</text><text class="fade d7" x="428" y="9" fill="#9a9a96" font-size="15">slow down</text>
+  </g>
+</g>
+</svg>

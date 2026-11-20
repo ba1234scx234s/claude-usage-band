@@ -1,0 +1,56 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="560" height="300" viewBox="0 0 560 300" font-family="Inter, -apple-system, 'Segoe UI', Helvetica, Arial, sans-serif">
+<title>16 languages: the Weekly row reads Weekly, Haftalık, Wöchentlich, Hebdo, Неделя, 週間, 주간, 每周 in turn above the 16 language names</title>
+<style>
+.grow{transform-box:fill-box;transform-origin:left center;animation:grow 12s cubic-bezier(.2,.7,.2,1) infinite}
+.tick{animation:tick 12s cubic-bezier(.2,.7,.2,1) infinite}
+.w0{animation:w0 12s ease infinite}
+.w{opacity:0;animation:w 12s ease infinite}
+.n0{animation:n0 12s ease infinite}
+.n{animation:n 12s ease infinite}
+.k1{animation-delay:1.2s}.k2{animation-delay:2.7s}.k3{animation-delay:4.2s}.k4{animation-delay:5.7s}
+.k5{animation-delay:7.2s}.k6{animation-delay:8.7s}.k7{animation-delay:10.2s}
+@keyframes grow{0%{transform:scaleX(0)}12%,100%{transform:scaleX(1)}}
+@keyframes tick{0%,8%{opacity:0}16%,100%{opacity:1}}
+@keyframes w0{0%,10%{opacity:1}12.5%,97.5%{opacity:0}100%{opacity:1}}
+@keyframes w{0%{opacity:0}2.5%,12.5%{opacity:1}15%,100%{opacity:0}}
+@keyframes n0{0%,10%{fill:#efefec}12.5%,97.5%{fill:#9a9a96}100%{fill:#efefec}}
+@keyframes n{0%{fill:#9a9a96}2.5%,12.5%{fill:#efefec}15%,100%{fill:#9a9a96}}
+@media (prefers-reduced-motion:reduce){.grow,.tick,.w0,.w,.n0,.n{animation:none}}
+</style>
+<rect x=".5" y=".5" width="559" height="299" rx="12" fill="#212121" stroke="#2c2c2b"/>
+<text x="26" y="44" fill="#efefec" font-size="19" font-weight="600">16 languages</text>
+<text x="26" y="72" fill="#9a9a96" font-size="14.5">Follows the app’s language, or pick one in /quota-settings.</text>
+<rect x="150" y="110" width="330" height="8" rx="4" fill="#333332"/>
+<rect class="grow" x="150" y="110" width="188" height="8" rx="4" fill="#aca285"/>
+<rect class="tick" x="475" y="109" width="3" height="10" fill="#e5534b"/>
+<text x="534" y="119" fill="#aca285" font-size="16" font-weight="600" text-anchor="end">57%</text>
+<g fill="#efefec" font-size="16" font-weight="600">
+  <g class="w0"><text x="26" y="118">Weekly</text><text x="26" y="146" fill="#9a9a96" font-size="14.5" font-weight="400">Limit will hit in 3d 3h – resets in 5d 11h</text></g>
+  <g class="w k1"><text x="26" y="118">Haftalık</text><text x="26" y="146" fill="#9a9a96" font-size="14.5" font-weight="400">Limit 3d 3h içinde dolacak – 5d 11h sonra sıfırlanır</text></g>
+  <g class="w k2"><text x="26" y="118">Wöchentlich</text><text x="26" y="146" fill="#9a9a96" font-size="14.5" font-weight="400">Limit erreicht in 3d 3h – Reset in 5d 11h</text></g>
+  <g class="w k3"><text x="26" y="118">Hebdo</text><text x="26" y="146" fill="#9a9a96" font-size="14.5" font-weight="400">Limite atteinte dans 3d 3h – réinitialisation dans 5d 11h</text></g>
+  <g class="w k4"><text x="26" y="118">Неделя</text><text x="26" y="146" fill="#9a9a96" font-size="14.5" font-weight="400">Лимит закончится через 3d 3h – сброс через 5d 11h</text></g>
+  <g class="w k5"><text x="26" y="118">週間</text><text x="26" y="146" fill="#9a9a96" font-size="14.5" font-weight="400">3d 3h後に上限 – 5d 11h後にリセット</text></g>
+  <g class="w k6"><text x="26" y="118">주간</text><text x="26" y="146" fill="#9a9a96" font-size="14.5" font-weight="400">3d 3h 후 한도 도달 – 5d 11h 후 초기화</text></g>
+  <g class="w k7"><text x="26" y="118">每周</text><text x="26" y="146" fill="#9a9a96" font-size="14.5" font-weight="400">3d 3h后达到上限 – 5d 11h后重置</text></g>
+</g>
+<rect x="26" y="174" width="508" height="1" fill="#2c2c2b"/>
+<g font-size="14">
+  <text class="n0" x="26" y="204" fill="#efefec">English</text>
+  <text class="n k1" x="156" y="204" fill="#9a9a96">Türkçe</text>
+  <text class="n k2" x="286" y="204" fill="#9a9a96">Deutsch</text>
+  <text class="n k3" x="416" y="204" fill="#9a9a96">Français</text>
+  <text x="26" y="230" fill="#9a9a96">Español</text>
+  <text x="156" y="230" fill="#9a9a96">Português</text>
+  <text x="286" y="230" fill="#9a9a96">Italiano</text>
+  <text x="416" y="230" fill="#9a9a96">Nederlands</text>
+  <text x="26" y="256" fill="#9a9a96">Polski</text>
+  <text class="n k4" x="156" y="256" fill="#9a9a96">Русский</text>
+  <text x="286" y="256" fill="#9a9a96">Українська</text>
+  <text class="n k5" x="416" y="256" fill="#9a9a96">日本語</text>
+  <text class="n k6" x="26" y="282" fill="#9a9a96">한국어</text>
+  <text class="n k7" x="156" y="282" fill="#9a9a96">简体中文</text>
+  <text x="286" y="282" fill="#9a9a96">繁體中文</text>
+  <text x="416" y="282" fill="#9a9a96">Bahasa Indonesia</text>
+</g>
+</svg>

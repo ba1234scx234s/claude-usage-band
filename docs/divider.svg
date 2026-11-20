@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="24" viewBox="0 0 1200 24">
+<title>Section divider</title>
+<style>
+.l{transform-box:fill-box;transform-origin:right center;animation:draw 12s cubic-bezier(.2,.7,.2,1) infinite both}
+.r{transform-box:fill-box;transform-origin:left center;animation:draw 12s cubic-bezier(.2,.7,.2,1) infinite both}
+.dot{animation:dot 12s cubic-bezier(.2,.7,.2,1) infinite both}
+@keyframes draw{0%,4%{transform:scaleX(0)}24%,100%{transform:scaleX(1)}}
+@keyframes dot{0%{opacity:0}8%,100%{opacity:1}}
+@media (prefers-reduced-motion:reduce){.l,.r,.dot{animation:none}}
+</style>
+<rect class="l" x="0" y="12" width="588" height="1" fill="#2c2c2b"/>
+<rect class="r" x="612" y="12" width="588" height="1" fill="#2c2c2b"/>
+<circle class="dot" cx="600" cy="12.5" r="2.5" fill="#4d4d4a"/>
+</svg>

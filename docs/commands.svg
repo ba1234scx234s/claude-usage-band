@@ -1,0 +1,81 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="300" viewBox="0 0 1200 300" role="img" aria-labelledby="t d" font-family="Inter, -apple-system, 'Segoe UI', Helvetica, Arial, sans-serif">
+<title id="t">Slash commands</title>
+<desc id="d">/quota turns the usage band on or off (when off, the status line shows the figures). /quota history or /quota-history opens Usage history, your past 5 Hour and Weekly windows. /quota settings or /quota-settings opens Usage settings: language, alerts, colours.</desc>
+<style>
+.in{animation:in 1.4s cubic-bezier(.2,.7,.2,1) both}
+.i2{animation-delay:.2s}.i3{animation-delay:.4s}
+.sw{animation:sw 10s cubic-bezier(.2,.7,.2,1) infinite both}
+.knob{animation:knob 10s cubic-bezier(.2,.7,.2,1) infinite both}
+.grow{transform-box:fill-box;transform-origin:left center;animation:grow 10s cubic-bezier(.2,.7,.2,1) infinite both}
+.g2{animation-delay:.15s}.g3{animation-delay:.3s}
+.fade{animation:fade 10s cubic-bezier(.2,.7,.2,1) infinite both}
+.f2{animation-delay:.15s}.f3{animation-delay:.3s}
+@keyframes in{0%{opacity:0}100%{opacity:1}}
+@keyframes sw{0%,8%{fill:#4d4d4a}20%,100%{fill:#4ade80}}
+@keyframes knob{0%,8%{transform:translateX(-12px)}20%,100%{transform:translateX(0)}}
+@keyframes grow{0%,6%{transform:scaleX(0)}22%,100%{transform:scaleX(1)}}
+@keyframes fade{0%,10%{opacity:0}24%,100%{opacity:1}}
+@media (prefers-reduced-motion:reduce){.in,.sw,.knob,.grow,.fade{animation:none}}
+</style>
+<defs>
+  <clipPath id="h1"><rect x="928" y="151" width="200" height="8" rx="4"/></clipPath>
+  <clipPath id="h2"><rect x="928" y="163" width="200" height="8" rx="4"/></clipPath>
+  <clipPath id="h3"><rect x="928" y="175" width="200" height="8" rx="4"/></clipPath>
+</defs>
+<rect width="1200" height="300" rx="16" fill="#151515"/>
+
+<text x="48" y="48" fill="#9a9a96" font-size="13" letter-spacing="2.4">SLASH COMMANDS</text>
+<text x="1152" y="48" fill="#9a9a96" font-size="14.5" text-anchor="end">Typing /quota lists all three</text>
+
+<rect x="48" y="68" width="1104" height="198" rx="12" fill="#212121" stroke="#2c2c2b"/>
+<rect x="72" y="134" width="1056" height="1" fill="#2c2c2b"/>
+<rect x="72" y="200" width="1056" height="1" fill="#2c2c2b"/>
+
+<!-- /quota -->
+<g class="in">
+  <text x="72" y="98" fill="#efefec" font-size="16" font-weight="600">/quota</text>
+  <text x="72" y="118" fill="#9a9a96" font-size="13.5">[history | settings]</text>
+  <text x="330" y="98" fill="#efefec" font-size="16">Turn the usage band on or off</text>
+  <text x="330" y="118" fill="#9a9a96" font-size="14">When off, the status line shows the figures instead</text>
+  <text x="1086" y="106" fill="#9a9a96" font-size="14" text-anchor="end">Band</text>
+  <rect class="sw" x="1098" y="92" width="30" height="18" rx="9" fill="#4ade80"/>
+  <circle class="knob" cx="1119" cy="101" r="6" fill="#efefec"/>
+</g>
+
+<!-- /quota history -->
+<g class="in i2">
+  <text x="72" y="164" fill="#efefec" font-size="16" font-weight="600">/quota history</text>
+  <text x="72" y="184" fill="#9a9a96" font-size="13.5">or /quota-history</text>
+  <text x="330" y="164" fill="#efefec" font-size="16">Your past 5 Hour and Weekly windows</text>
+  <text x="330" y="184" fill="#9a9a96" font-size="14">Opens Usage history: each window's peak, split by chat</text>
+  <rect x="928" y="151" width="200" height="8" rx="4" fill="#333332"/>
+  <rect x="928" y="163" width="200" height="8" rx="4" fill="#333332"/>
+  <rect x="928" y="175" width="200" height="8" rx="4" fill="#333332"/>
+  <g clip-path="url(#h1)"><g class="grow">
+    <rect x="928" y="151" width="80" height="8" fill="#60a5fa"/>
+    <rect x="1008" y="151" width="60" height="8" fill="#f472b6"/>
+    <rect x="1068" y="151" width="24" height="8" fill="#9a9a96"/>
+  </g></g>
+  <g clip-path="url(#h2)"><g class="grow g2">
+    <rect x="928" y="163" width="68" height="8" fill="#60a5fa"/>
+    <rect x="996" y="163" width="36" height="8" fill="#4ade80"/>
+    <rect x="1032" y="163" width="10" height="8" fill="#9a9a96"/>
+  </g></g>
+  <g clip-path="url(#h3)"><g class="grow g3">
+    <rect x="928" y="175" width="100" height="8" fill="#f472b6"/>
+    <rect x="1028" y="175" width="76" height="8" fill="#60a5fa"/>
+    <rect x="1104" y="175" width="24" height="8" fill="#9a9a96"/>
+  </g></g>
+</g>
+
+<!-- /quota settings -->
+<g class="in i3">
+  <text x="72" y="230" fill="#efefec" font-size="16" font-weight="600">/quota settings</text>
+  <text x="72" y="250" fill="#9a9a96" font-size="13.5">or /quota-settings</text>
+  <text x="330" y="230" fill="#efefec" font-size="16">The usage band's settings: language, alerts, colours</text>
+  <text x="330" y="250" fill="#9a9a96" font-size="14">Opens Usage settings, the same values as /config</text>
+  <g class="fade"><rect x="868" y="221" width="78" height="24" rx="6" fill="#373838"/><text x="907" y="237.5" fill="#efefec" font-size="13" text-anchor="middle">Language</text></g>
+  <g class="fade f2"><rect x="954" y="221" width="62" height="24" rx="6" fill="#373838"/><text x="985" y="237.5" fill="#efefec" font-size="13" text-anchor="middle">Alerts</text></g>
+  <g class="fade f3"><rect x="1024" y="221" width="104" height="24" rx="6" fill="#373838"/><text x="1076" y="237.5" fill="#efefec" font-size="13" text-anchor="middle">Auto compact</text></g>
+</g>
+</svg>

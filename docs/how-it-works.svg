@@ -1,0 +1,103 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="480" viewBox="0 0 1200 480" role="img" aria-labelledby="t d" font-family="Inter, -apple-system, 'Segoe UI', Helvetica, Arial, sans-serif">
+<title id="t">How it works</title>
+<desc id="d">Anthropic's usage service (about every 2 minutes) and each reply's limits (every 3 seconds) are merged per window, newest reading wins, and drawn as the band above your prompt. No tokens used, never sees your credentials, one host: api.anthropic.com.</desc>
+<style>
+.in{animation:in 1.4s cubic-bezier(.2,.7,.2,1) both}
+.i2{animation-delay:.2s}.i3{animation-delay:.45s}.i4{animation-delay:.7s}.i5{animation-delay:.95s}
+.flow{stroke-dasharray:2 12;animation:flow 9s linear infinite}
+.grow{transform-box:fill-box;transform-origin:left center;animation:grow 10s cubic-bezier(.2,.7,.2,1) infinite both}
+.g2{animation-delay:.15s}.g3{animation-delay:.3s}
+.tick{animation:tick 10s cubic-bezier(.2,.7,.2,1) infinite both}
+@keyframes in{0%{opacity:0}100%{opacity:1}}
+@keyframes flow{0%{stroke-dashoffset:0}100%{stroke-dashoffset:-56}}
+@keyframes grow{0%{transform:scaleX(0)}16%,100%{transform:scaleX(1)}}
+@keyframes tick{0%,10%{opacity:0}22%,100%{opacity:1}}
+@media (prefers-reduced-motion:reduce){.in,.flow,.grow,.tick{animation:none}}
+</style>
+<defs><clipPath id="ctx"><rect x="890" y="278" width="194" height="8" rx="4"/></clipPath></defs>
+<rect width="1200" height="480" rx="16" fill="#151515"/>
+
+<text x="48" y="56" fill="#9a9a96" font-size="13" letter-spacing="2.4">HOW IT WORKS</text>
+<text x="48" y="92" fill="#efefec" font-size="26" font-weight="600">Two live sources, merged on your machine</text>
+
+<!-- connectors: thin lines, small arrowheads, slow dashes riding along -->
+<g class="in i3">
+<g fill="none" stroke-width="1.5">
+  <path d="M368 182 C408 182 404 250 441 250" stroke="#4d4d4a"/>
+  <path d="M368 318 C408 318 404 250 441 250" stroke="#4d4d4a"/>
+  <path d="M708 250 H781" stroke="#4d4d4a"/>
+  <path class="flow" d="M368 182 C408 182 404 250 441 250" stroke="#9a9a96"/>
+  <path class="flow" d="M368 318 C408 318 404 250 441 250" stroke="#9a9a96"/>
+  <path class="flow" d="M708 250 H781" stroke="#9a9a96"/>
+</g>
+<path d="M441 246 L448 250 L441 254 Z" fill="#4d4d4a"/>
+<path d="M781 246 L788 250 L781 254 Z" fill="#4d4d4a"/>
+</g>
+
+<!-- source 1 -->
+<g class="in">
+  <rect x="48" y="124" width="320" height="116" rx="12" fill="#212121" stroke="#2c2c2b"/>
+  <text x="72" y="158" fill="#9a9a96" font-size="12" letter-spacing="2">ABOUT EVERY 2 MIN</text>
+  <text x="72" y="188" fill="#efefec" font-size="17" font-weight="600">Anthropic usage service</text>
+  <text x="72" y="214" fill="#9a9a96" font-size="14.5">one request, through your existing login</text>
+</g>
+
+<!-- source 2 -->
+<g class="in i2">
+  <rect x="48" y="260" width="320" height="116" rx="12" fill="#212121" stroke="#2c2c2b"/>
+  <text x="72" y="294" fill="#9a9a96" font-size="12" letter-spacing="2">EVERY 3 SECONDS</text>
+  <text x="72" y="324" fill="#efefec" font-size="17" font-weight="600">Each reply's limits</text>
+  <text x="72" y="350" fill="#9a9a96" font-size="14.5">read live from the session</text>
+</g>
+
+<!-- merge -->
+<g class="in i3">
+  <rect x="448" y="184" width="260" height="132" rx="12" fill="#212121" stroke="#2c2c2b"/>
+  <text x="472" y="218" fill="#9a9a96" font-size="12" letter-spacing="2">ON YOUR MACHINE</text>
+  <text x="472" y="248" fill="#efefec" font-size="17" font-weight="600">Merged per window</text>
+  <text x="472" y="274" fill="#9a9a96" font-size="14.5">newest reading wins,</text>
+  <text x="472" y="296" fill="#9a9a96" font-size="14.5">shared by every open chat</text>
+</g>
+
+<!-- the band -->
+<g class="in i4">
+  <rect x="788" y="124" width="364" height="252" rx="12" fill="#212121" stroke="#2c2c2b"/>
+  <text x="812" y="158" fill="#9a9a96" font-size="12" letter-spacing="2">WHAT YOU SEE</text>
+  <text x="812" y="188" fill="#efefec" font-size="17" font-weight="600">The band above your prompt</text>
+
+  <text x="812" y="222" fill="#efefec" font-size="15" font-weight="600">5 Hour</text>
+  <rect x="890" y="214" width="194" height="8" rx="4" fill="#333332"/>
+  <rect class="grow" x="890" y="214" width="14" height="8" rx="4" fill="#9a9a96"/>
+  <rect class="tick" x="997" y="213" width="3" height="10" fill="#dcdbd6"/>
+  <text x="1128" y="222" fill="#9a9a96" font-size="15" text-anchor="end">7%</text>
+
+  <text x="812" y="254" fill="#efefec" font-size="15" font-weight="600">Weekly</text>
+  <rect x="890" y="246" width="194" height="8" rx="4" fill="#333332"/>
+  <rect class="grow g2" x="890" y="246" width="111" height="8" rx="4" fill="#aca285"/>
+  <rect class="tick" x="1079" y="245" width="3" height="10" fill="#e5534b"/>
+  <text x="1128" y="254" fill="#aca285" font-size="15" font-weight="600" text-anchor="end">57%</text>
+
+  <text x="812" y="286" fill="#efefec" font-size="15" font-weight="600">Context</text>
+  <rect x="890" y="278" width="194" height="8" rx="4" fill="#333332"/>
+  <g clip-path="url(#ctx)"><g class="grow g3">
+    <rect x="890" y="278" width="62" height="8" fill="#78d0ea"/>
+    <rect x="952" y="278" width="7" height="8" fill="#a48ef2"/>
+    <rect x="959" y="278" width="5" height="8" fill="#9a9a96"/>
+  </g></g>
+  <text x="1128" y="286" fill="#aca285" font-size="15" font-weight="600" text-anchor="end">38%</text>
+
+  <rect x="812" y="310" width="316" height="40" rx="8" fill="#151515" stroke="#2c2c2b"/>
+  <text x="828" y="336" fill="#9a9a96" font-size="18">›</text>
+  <rect x="844" y="320" width="2" height="20" fill="#efefec"/>
+</g>
+
+<!-- privacy facts -->
+<g class="in i5">
+  <rect x="48" y="400" width="1104" height="48" rx="12" fill="#212121" stroke="#2c2c2b"/>
+  <rect x="416" y="414" width="1" height="20" fill="#333332"/>
+  <rect x="784" y="414" width="1" height="20" fill="#333332"/>
+  <text x="232" y="429" fill="#efefec" font-size="15" text-anchor="middle">No tokens used</text>
+  <text x="600" y="429" fill="#efefec" font-size="15" text-anchor="middle">Never sees your credentials</text>
+  <text x="968" y="429" fill="#efefec" font-size="15" text-anchor="middle"><tspan fill="#9a9a96">One host:</tspan> api.anthropic.com</text>
+</g>
+</svg>

@@ -1,0 +1,32 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="560" height="300" viewBox="0 0 560 300" font-family="Inter, -apple-system, 'Segoe UI', Helvetica, Arial, sans-serif">
+<title>Alerts: a notification at 90%, one when the limit is reached, and one when the 5 Hour window resets</title>
+<style>
+.in{animation:in 10s cubic-bezier(.2,.7,.2,1) infinite both}
+.grow{transform-box:fill-box;transform-origin:left center;animation:grow 10s cubic-bezier(.2,.7,.2,1) infinite both}
+.d1{animation-delay:.3s}.d2{animation-delay:1.3s}.d3{animation-delay:2.3s}
+.g1{animation-delay:.5s}.g2{animation-delay:1.5s}
+@keyframes in{0%,3%{opacity:0;transform:translateY(6px)}13%,100%{opacity:1;transform:translateY(0)}}
+@keyframes grow{0%,3%{transform:scaleX(0)}16%,100%{transform:scaleX(1)}}
+@media (prefers-reduced-motion:reduce){.in,.grow{animation:none}}
+</style>
+<rect x=".5" y=".5" width="559" height="299" rx="12" fill="#212121" stroke="#2c2c2b"/>
+<text x="26" y="44" fill="#efefec" font-size="19" font-weight="600">Alerts that matter</text>
+<text x="26" y="72" fill="#9a9a96" font-size="14.5">A heads-up at 90%, at the limit, and when your 5 hours are back.</text>
+<g class="in d1">
+  <rect x="26.5" y="100.5" width="507" height="45" rx="10" fill="#151515" stroke="#2c2c2b"/>
+  <rect x="46" y="119" width="64" height="8" rx="4" fill="#333332"/>
+  <rect class="grow g1" x="46" y="119" width="58" height="8" rx="4" fill="#e5b54a"/>
+  <text x="128" y="128" fill="#efefec" font-size="14">5 Hour limit at 90% – resets in 1h 10m.</text>
+</g>
+<g class="in d2">
+  <rect x="26.5" y="158.5" width="507" height="45" rx="10" fill="#151515" stroke="#2c2c2b"/>
+  <rect x="46" y="177" width="64" height="8" rx="4" fill="#333332"/>
+  <rect class="grow g2" x="46" y="177" width="64" height="8" rx="4" fill="#e5534b"/>
+  <text x="128" y="186" fill="#efefec" font-size="14">5 Hour limit reached. Usage resumes at 4:40 PM.</text>
+</g>
+<g class="in d3">
+  <rect x="26.5" y="216.5" width="507" height="45" rx="10" fill="#151515" stroke="#2c2c2b"/>
+  <rect x="46" y="235" width="64" height="8" rx="4" fill="#333332"/>
+  <text x="128" y="244" fill="#efefec" font-size="14">5 Hour limit reset: your full allowance is back.</text>
+</g>
+</svg>

@@ -1,0 +1,40 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="560" height="300" viewBox="0 0 560 300" font-family="Inter, -apple-system, 'Segoe UI', Helvetica, Arial, sans-serif">
+<title>Usage history: each 5 hour window's peak as a bar split by the chats that used it, the running one on top, a past one unfolded to list its chats</title>
+<style>
+.grow{transform-box:fill-box;transform-origin:left center;animation:grow 10s cubic-bezier(.2,.7,.2,1) infinite both}
+.fade{animation:fade 10s cubic-bezier(.2,.7,.2,1) infinite both}
+.d1{animation-delay:.2s}.d2{animation-delay:.5s}.d3{animation-delay:.9s}.d4{animation-delay:1.1s}.d5{animation-delay:1.3s}
+@keyframes grow{0%{transform:scaleX(0)}16%,100%{transform:scaleX(1)}}
+@keyframes fade{0%,4%{opacity:0}14%,100%{opacity:1}}
+@media (prefers-reduced-motion:reduce){.grow,.fade{animation:none}}
+</style>
+<clipPath id="now"><rect x="186" y="119" width="290" height="8" rx="4"/></clipPath>
+<clipPath id="past"><rect x="186" y="193" width="290" height="8" rx="4"/></clipPath>
+<rect x=".5" y=".5" width="559" height="299" rx="12" fill="#212121" stroke="#2c2c2b"/>
+<text x="26" y="44" fill="#efefec" font-size="19" font-weight="600">Usage history</text>
+<text x="26" y="72" fill="#9a9a96" font-size="14.5">Last 10 five-hour windows and 8 weeks, by chat: <tspan fill="#efefec">/quota-history</tspan></text>
+<text x="26" y="104" fill="#9a9a96" font-size="12.5" font-weight="600" letter-spacing="2.2">5 HOUR</text>
+<path d="M28 119 L33.5 123 L28 127 Z" fill="#9a9a96"/>
+<text x="42" y="128" fill="#efefec" font-size="14">Now</text>
+<rect x="186" y="119" width="290" height="8" rx="4" fill="#333332"/>
+<g clip-path="url(#now)"><g class="grow d1">
+  <rect x="186" y="119" width="69.6" height="8" fill="#60a5fa"/>
+  <rect x="255.6" y="119" width="31.9" height="8" fill="#a78bfa"/>
+  <rect x="287.5" y="119" width="17.4" height="8" fill="#9a9a96"/>
+</g></g>
+<text x="534" y="128" fill="#9a9a96" font-size="14" font-weight="600" text-anchor="end">41%</text>
+<text class="fade d1" x="42" y="148" fill="#9a9a96" font-size="13.5">resets in 2h 10m</text>
+<text x="26" y="178" fill="#efefec" font-size="14" font-weight="600">Yesterday · Tuesday, October 13</text>
+<path d="M27 194.5 L35 194.5 L31 199.5 Z" fill="#9a9a96"/>
+<text x="42" y="202" fill="#efefec" font-size="14">9:39 PM – 2:39 AM</text>
+<rect x="186" y="193" width="290" height="8" rx="4" fill="#333332"/>
+<g clip-path="url(#past)"><g class="grow d2">
+  <rect x="186" y="193" width="89.9" height="8" fill="#60a5fa"/>
+  <rect x="275.9" y="193" width="55.1" height="8" fill="#f472b6"/>
+  <rect x="331" y="193" width="34.8" height="8" fill="#9a9a96"/>
+</g></g>
+<text x="534" y="202" fill="#aca285" font-size="14" font-weight="600" text-anchor="end">62%</text>
+<g class="fade d3"><circle cx="46" cy="219.5" r="4" fill="#60a5fa"/><text x="58" y="224" fill="#efefec" font-size="13.5">make the readme cards look like the band</text><text x="534" y="224" fill="#9a9a96" font-size="13.5" text-anchor="end">31%</text></g>
+<g class="fade d4"><circle cx="46" cy="239.5" r="4" fill="#f472b6"/><text x="58" y="244" fill="#efefec" font-size="13.5">add tests for the history pane</text><text x="534" y="244" fill="#9a9a96" font-size="13.5" text-anchor="end">19%</text></g>
+<g class="fade d5"><circle cx="46" cy="259.5" r="4" fill="#9a9a96"/><text x="58" y="264" fill="#efefec" font-size="13.5">Other / not recorded</text><text x="534" y="264" fill="#9a9a96" font-size="13.5" text-anchor="end">12%</text></g>
+</svg>

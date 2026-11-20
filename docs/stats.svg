@@ -1,0 +1,29 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="170" viewBox="0 0 1200 170" font-family="Inter, -apple-system, 'Segoe UI', Helvetica, Arial, sans-serif" role="img" aria-label="2 limits tracked, 16 languages, 0 tokens used, 3 second live refresh">
+<style>
+.num{animation:num 10s cubic-bezier(.2,.7,.2,1) infinite both}
+.d1{animation-delay:.12s}.d2{animation-delay:.24s}.d3{animation-delay:.36s}
+@keyframes num{0%{opacity:0;transform:translateY(6px)}14%,100%{opacity:1;transform:translateY(0)}}
+@media (prefers-reduced-motion:reduce){.num{animation:none}}
+</style>
+<rect width="1200" height="170" rx="16" fill="#151515"/>
+
+<rect x="24.5" y="18.5" width="275" height="133" rx="12" fill="#212121" stroke="#2c2c2b"/>
+<text x="48" y="50" fill="#9a9a96" font-size="12" letter-spacing="2.2">LIMITS TRACKED</text>
+<text class="num" x="48" y="102" fill="#efefec" font-size="44" font-weight="600">2</text>
+<text x="48" y="132" fill="#9a9a96" font-size="14">5 Hour + Weekly</text>
+
+<rect x="316.5" y="18.5" width="275" height="133" rx="12" fill="#212121" stroke="#2c2c2b"/>
+<text x="340" y="50" fill="#9a9a96" font-size="12" letter-spacing="2.2">LANGUAGES</text>
+<text class="num d1" x="340" y="102" fill="#efefec" font-size="44" font-weight="600">16</text>
+<text x="340" y="132" fill="#9a9a96" font-size="14">English · Türkçe · 日本語 · +13</text>
+
+<rect x="608.5" y="18.5" width="275" height="133" rx="12" fill="#212121" stroke="#2c2c2b"/>
+<text x="632" y="50" fill="#9a9a96" font-size="12" letter-spacing="2.2">TOKENS USED</text>
+<text class="num d2" x="632" y="102" fill="#efefec" font-size="44" font-weight="600">0</text>
+<text x="632" y="132" fill="#9a9a96" font-size="14">never counts toward limits</text>
+
+<rect x="900.5" y="18.5" width="275" height="133" rx="12" fill="#212121" stroke="#2c2c2b"/>
+<text x="924" y="50" fill="#9a9a96" font-size="12" letter-spacing="2.2">LIVE REFRESH</text>
+<text class="num d3" x="924" y="102" fill="#efefec" font-size="44" font-weight="600">3<tspan fill="#9a9a96" font-size="24" font-weight="400" dx="6">s</tspan></text>
+<text x="924" y="132" fill="#9a9a96" font-size="14">context · plan every 2 min</text>
+</svg>
