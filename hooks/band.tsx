@@ -174,70 +174,17 @@ function cellRuns(f: Forecast, cells: number, fill: string, c: Palette): { color
   return runs
 }
 
-export function bandTree(table: ElementTable<'terminal' | 'desktop'>, surface: RenderSurface, width: number, view: BandView, act: BandActions) {
-  const { snap, now, collapsed, auto, ask, tick, spent, drawnAt, t } = view
+const WARM_NAME = 'Keep cache warm'
+
+/** The two switches: Auto compact (with its % field) and Keep cache warm. The desktop draws
+ * them under the prompt, at the left of its footer; the terminal in the band's controls. */
+export type SwitchesView = Pick<BandView, 'auto' | 'tick' | 'drawnAt' | 't' | 'isLight' | 'keepWarm' | 'isHitDown' | 'isWarmHitDown'>
+export function switchesRow(table: ElementTable<'terminal' | 'desktop'>, surface: RenderSurface, view: SwitchesView, act: BandActions) {
+  const { auto, tick, drawnAt, t } = view
   const { Box, Text, Button, Input, Client } = table
-  // thin Svg bars on the desktop alone: the terminal draws coloured cells
   const Svg = surface === 'desktop' && 'Svg' in table ? table.Svg : undefined
-  // the light palette is the desktop's alone: the terminal keeps its own colours
   const c = surface === 'desktop' && view.isLight ? LIGHT : DARK
-  const limitColor = (p: number) => rampColor(p, view.limitRamp, c)
-  // both windows always, once there is any reading: one the reading lacks is not running
-  const known = snap.limits.length === 0 ? [] : Object.keys(WINDOWS).map(kind => snap.limits.find(l => l.kind === kind) ?? { kind, percentUsed: 0 })
-  const list = known.map(l => forecast(l, now, snap.pace?.[l.kind])).filter((f): f is Forecast => f !== null)
-  const head = headline(list, now, t)
-  // free as /context has it: the window less what is used and the autocompact buffer
-  const buffer = snap.categories.find(cat => cat.kind === 'buffer')?.tokens ?? 0
-  const free = Math.max(0, snap.window - snap.tokens - buffer)
-  // highest first, as /context lists them: used categories, then the buffer, then free space
-  const rank = (cat: Category) => (cat.kind === 'used' ? 0 : cat.kind === 'buffer' ? 1 : 2)
-  const shown = snap.categories
-    .map((cat, i) => ({ ...cat, color: colorOf(cat, i, c) }))
-    .sort((a, b) => rank(a) - rank(b) || b.tokens - a.tokens)
-
-  const limits = [...list].sort((a, b) => order(a.kind) - order(b.kind))
-  // say so when the figures are old: the service refused and no reply has come since
-  const age = snap.limitsAt === undefined ? 0 : now - snap.limitsAt
-  const stale =
-    snap.limitsError && age >= 2 * 60_000 && limits.length > 0
-      ? fmt(t.stale, { error: snap.limitsError, age: duration(age) })
-      : snap.limitsError && limits.length === 0
-        ? fmt(t.usageCheck, { error: snap.limitsError })
-        : undefined
-  // Laid out to the width the chat gives the band, down to the desktop's narrowest
-  // chat: what fits side by side stays side by side; past that it stacks, and text
-  // wraps rather than cuts off.
-  // The header: the headline beside the controls when both fit, else the controls
-  // on a row of their own beneath it
-  // (the desktop's letters are narrower than its cells: about 0.8 of one)
-  // the controls: their two names, and 21 cells of switch, field, buttons and gaps
-  const WARM_NAME = 'Keep cache warm'
-  // the keep-warm switch, its name and a gap: 7 more cells
-  const CONTROLS = 29 + cellsOf(t.autoCompact) + cellsOf(WARM_NAME) + cellsOf(t.compact)
-  // the terminal draws its own hide control ([-]) over the band's top-right
-  // corner: the first row keeps clear of it
-  const HOST_HIDE = Svg ? 0 : 4
-  const isHeadBeside = width >= cellsOf(head?.text ?? '') * (Svg ? 0.8 : 1) + CONTROLS + HOST_HIDE
-  // the windows and the context side by side, or one above the other
-  const isSplit = width >= 84
-  const column = isSplit ? Math.floor((width - 4) / 2) : width
-  // the limit bars fill their column: less the label (as wide as the longest name, 8 at
-  // least) and the % (2 + 4)
-  const labelCells = Math.max(8, ...Object.keys(WINDOWS).map(kind => cellsOf(windowName(kind, t)) + 1))
-  const cells = Math.max(6, column - labelCells - 6)
-  // collapsed: the three bars in one row, or each on a row of its own
-  const isOneRow = width >= 72
-  // the context's two figures on one line, or the free count on the next
-  const isContextLine = column >= 38
-  // the question and its two answers on one line when they fit, else the answers
-  // beneath: measured from the words themselves (the desktop draws text narrower than
-  // a cell each, as the headline's check allows), each button's chrome and the gaps
-  const ASK_LABELS = [t.now, t.afterNext]
-  const askLine = ask ? fmt(t.alreadyPast, { percent: ask.percent, at: ask.at }) : ''
-  const askWords = cellsOf(askLine) + cellsOf(ASK_LABELS.join(''))
-  const isAskLine = width >= askWords * (Svg ? 0.8 : 1) + ASK_LABELS.length * (Svg ? 3 : 4) + 3
-
-  const controls = (
+  return (
     <Box flexDirection="row" alignItems="center" columnGap={1} flexShrink={0} flexWrap="wrap">
       {/* auto compact: the switch (the press), its name, the % field beside it,
           then a wide gap so the field reads as the switch's, not Compact's */}
@@ -292,7 +239,7 @@ export function bandTree(table: ElementTable<'terminal' | 'desktop'>, surface: R
         </Box>
       ) : null}
       {/* keep warm: this chat's alone, drawn as the auto compact switch is */}
-      <Box flexDirection="row" alignItems="center" columnGap={1} marginLeft={isHeadBeside ? 2 : 0}>
+      <Box flexDirection="row" alignItems="center" columnGap={1} marginLeft={2}>
         {Svg ? (
           <Box key="warmSwitch" width={SWITCH_CELLS} height={1} overflow="hidden">
             <Box position="absolute" top={0} left={0} width={SWITCH_CELLS} height={1} alignItems="center" justifyContent="center">
@@ -313,6 +260,76 @@ export function bandTree(table: ElementTable<'terminal' | 'desktop'>, surface: R
           <Text color={view.keepWarm ? undefined : c.muted}>{WARM_NAME}</Text>
         </Button>
       </Box>
+    </Box>
+  )
+}
+
+export function bandTree(table: ElementTable<'terminal' | 'desktop'>, surface: RenderSurface, width: number, view: BandView, act: BandActions) {
+  const { snap, now, collapsed, auto, ask, tick, spent, drawnAt, t } = view
+  const { Box, Text, Button, Input, Client } = table
+  // thin Svg bars on the desktop alone: the terminal draws coloured cells
+  const Svg = surface === 'desktop' && 'Svg' in table ? table.Svg : undefined
+  // the light palette is the desktop's alone: the terminal keeps its own colours
+  const c = surface === 'desktop' && view.isLight ? LIGHT : DARK
+  const limitColor = (p: number) => rampColor(p, view.limitRamp, c)
+  // both windows always, once there is any reading: one the reading lacks is not running
+  const known = snap.limits.length === 0 ? [] : Object.keys(WINDOWS).map(kind => snap.limits.find(l => l.kind === kind) ?? { kind, percentUsed: 0 })
+  const list = known.map(l => forecast(l, now, snap.pace?.[l.kind])).filter((f): f is Forecast => f !== null)
+  const head = headline(list, now, t)
+  // free as /context has it: the window less what is used and the autocompact buffer
+  const buffer = snap.categories.find(cat => cat.kind === 'buffer')?.tokens ?? 0
+  const free = Math.max(0, snap.window - snap.tokens - buffer)
+  // highest first, as /context lists them: used categories, then the buffer, then free space
+  const rank = (cat: Category) => (cat.kind === 'used' ? 0 : cat.kind === 'buffer' ? 1 : 2)
+  const shown = snap.categories
+    .map((cat, i) => ({ ...cat, color: colorOf(cat, i, c) }))
+    .sort((a, b) => rank(a) - rank(b) || b.tokens - a.tokens)
+
+  const limits = [...list].sort((a, b) => order(a.kind) - order(b.kind))
+  // say so when the figures are old: the service refused and no reply has come since
+  const age = snap.limitsAt === undefined ? 0 : now - snap.limitsAt
+  const stale =
+    snap.limitsError && age >= 2 * 60_000 && limits.length > 0
+      ? fmt(t.stale, { error: snap.limitsError, age: duration(age) })
+      : snap.limitsError && limits.length === 0
+        ? fmt(t.usageCheck, { error: snap.limitsError })
+        : undefined
+  // Laid out to the width the chat gives the band, down to the desktop's narrowest
+  // chat: what fits side by side stays side by side; past that it stacks, and text
+  // wraps rather than cuts off.
+  // The header: the headline beside the controls when both fit, else the controls
+  // on a row of their own beneath it
+  // (the desktop's letters are narrower than its cells: about 0.8 of one)
+  // the controls: their two names, and 21 cells of switch, field, buttons and gaps
+  // the controls' cells: on the desktop Compact and the arrow alone (the switches sit under
+  // the prompt); on the terminal the switches, their names and the field as well
+  const CONTROLS = Svg ? 8 + cellsOf(t.compact) : 29 + cellsOf(t.autoCompact) + cellsOf(WARM_NAME) + cellsOf(t.compact)
+  // the terminal draws its own hide control ([-]) over the band's top-right
+  // corner: the first row keeps clear of it
+  const HOST_HIDE = Svg ? 0 : 4
+  const isHeadBeside = width >= cellsOf(head?.text ?? '') * (Svg ? 0.8 : 1) + CONTROLS + HOST_HIDE
+  // the windows and the context side by side, or one above the other
+  const isSplit = width >= 84
+  const column = isSplit ? Math.floor((width - 4) / 2) : width
+  // the limit bars fill their column: less the label (as wide as the longest name, 8 at
+  // least) and the % (2 + 4)
+  const labelCells = Math.max(8, ...Object.keys(WINDOWS).map(kind => cellsOf(windowName(kind, t)) + 1))
+  const cells = Math.max(6, column - labelCells - 6)
+  // collapsed: the three bars in one row, or each on a row of its own
+  const isOneRow = width >= 72
+  // the context's two figures on one line, or the free count on the next
+  const isContextLine = column >= 38
+  // the question and its two answers on one line when they fit, else the answers
+  // beneath: measured from the words themselves (the desktop draws text narrower than
+  // a cell each, as the headline's check allows), each button's chrome and the gaps
+  const ASK_LABELS = [t.now, t.afterNext]
+  const askLine = ask ? fmt(t.alreadyPast, { percent: ask.percent, at: ask.at }) : ''
+  const askWords = cellsOf(askLine) + cellsOf(ASK_LABELS.join(''))
+  const isAskLine = width >= askWords * (Svg ? 0.8 : 1) + ASK_LABELS.length * (Svg ? 3 : 4) + 3
+
+  const controls = (
+    <Box flexDirection="row" alignItems="center" columnGap={1} flexShrink={0} flexWrap="wrap">
+      {Svg ? null : switchesRow(table, surface, view, act)}
       <Box key="compactBox" marginLeft={isHeadBeside ? 2 : 0}>
         <Button key="compact" label={t.compact} hover={{ backgroundColor: c.compactLit }} onPress={() => act.compact()} />
       </Box>

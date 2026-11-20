@@ -91,6 +91,29 @@ function answerRest(on: On, status: (string | undefined)[]) {
 const MEASURE = { context: { window: 1_000_000, tokens: 158_000, percent: 16 }, rateLimits: [] }
 
 // the % field is drawn afresh after every set, under a new key
+// On the desktop the two switches sit under the prompt (PromptHint), the rest in the band:
+// one handle over both, so a test finds, clicks and types in either as the person would
+const HINT_PROPS = { isDraft: false, isWorking: false, hint: '? for shortcuts' }
+type Mounted = Awaited<ReturnType<Parameters<Parameters<typeof test>[1]>[0]['ui']['mount']>>
+async function mountBand($: Parameters<Parameters<typeof test>[1]>[0], surface: 'terminal' | 'desktop', props: typeof PROPS): Promise<Mounted> {
+  const ui = await $.ui.mount({ plugin: 'usage-quota', surface, component: 'AbovePrompt', props })
+  if (surface !== 'desktop') return ui
+  const hint = await $.ui.mount({ plugin: 'usage-quota', surface, component: 'PromptHint', props: HINT_PROPS as never })
+  const inHint = (key: unknown) => /^(autoHit|warmHit|autoAt|auto$|autoLabel|warm$|warmLabel)/.test(String(key))
+  return {
+    ...ui,
+    find: (async (q: never) => (await ui.find(q)) ?? (await hint.find(q))) as Mounted['find'],
+    findAll: (async (q: never) => [...(await ui.findAll(q)), ...(await hint.findAll(q))]) as Mounted['findAll'],
+    pointer: ((ev: { in?: string }) => (inHint(ev.in) ? hint.pointer(ev as never) : ui.pointer(ev as never))) as Mounted['pointer'],
+    press: ((t: { key: string }) => (inHint(t.key) ? hint.press(t as never) : ui.press(t as never))) as Mounted['press'],
+    input: ((i: { key: string }) => (inHint(i.key) ? hint.input(i as never) : ui.input(i as never))) as Mounted['input'],
+    unmount: (async () => {
+      await hint.unmount()
+      await ui.unmount()
+    }) as Mounted['unmount'],
+  }
+}
+
 async function fieldKey(ui: { find: (q: { type: 'Input' }) => Promise<{ props: { key?: string } } | undefined> }): Promise<string> {
   return String((await ui.find({ type: 'Input' }))?.props.key)
 }
@@ -103,7 +126,7 @@ test('draws the band on track', async ($, on) => {
   await $.session.measure(MEASURE)
 
   for (const surface of SURFACES) {
-    const ui = await $.ui.mount({ plugin: 'usage-quota', surface, component: 'AbovePrompt', props: PROPS })
+    const ui = await mountBand($, surface, PROPS)
     expect(await ui.find({ text: /^On track\. You should reach Wednesday's reset with room to spare\.$/ })).toBeDefined()
     expect(await ui.find({ text: '16% used' })).toBeDefined()
     expect(await ui.find({ text: '809k free of 1M' })).toBeDefined()
@@ -170,7 +193,7 @@ test('leads with a window that will run out', async ($, on) => {
   await $.session.measure(MEASURE)
 
   for (const surface of SURFACES) {
-    const ui = await $.ui.mount({ plugin: 'usage-quota', surface, component: 'AbovePrompt', props: PROPS })
+    const ui = await mountBand($, surface, PROPS)
     const head = await ui.find({ type: 'Text', text: /^At this pace you'll run out before the .* reset\.$/ })
     // coloured by what is used (60%: grey turning yellow), never red for a forecast alone
     expect(head?.props.color).toBe((await ui.find({ type: 'Text', text: '60%' }))?.props.color)
@@ -192,7 +215,7 @@ test('says when a limit is reached', async ($, on) => {
   await $.session.measure(MEASURE)
 
   for (const surface of SURFACES) {
-    const ui = await $.ui.mount({ plugin: 'usage-quota', surface, component: 'AbovePrompt', props: PROPS })
+    const ui = await mountBand($, surface, PROPS)
     expect(await ui.find({ text: /^Limit reached\. Usage resumes at Tuesday \d+:\d\d [AP]M\.$/ })).toBeDefined()
     await ui.unmount()
   }
@@ -203,7 +226,7 @@ test('treats the first 3% of a window as on track', async ($, on) => {
   await $.session.measure(MEASURE)
 
   for (const surface of SURFACES) {
-    const ui = await $.ui.mount({ plugin: 'usage-quota', surface, component: 'AbovePrompt', props: PROPS })
+    const ui = await mountBand($, surface, PROPS)
     expect(await ui.find({ text: /^On track\./ })).toBeDefined()
     await ui.unmount()
   }
@@ -231,7 +254,7 @@ test('the Compact button runs /compact', async ($, on) => {
   await $.session.measure(MEASURE)
 
   for (const surface of SURFACES) {
-    const ui = await $.ui.mount({ plugin: 'usage-quota', surface, component: 'AbovePrompt', props: PROPS })
+    const ui = await mountBand($, surface, PROPS)
     await ui.press({ key: 'compact' })
     await clock.advance(1)
     await ui.unmount()
@@ -255,7 +278,7 @@ test('a fresh session shows the last saved limits until its first reply', async 
   await $.session.measure(MEASURE)
 
   for (const surface of SURFACES) {
-    const ui = await $.ui.mount({ plugin: 'usage-quota', surface, component: 'AbovePrompt', props: PROPS })
+    const ui = await mountBand($, surface, PROPS)
     expect(await ui.find({ text: 'Weekly' })).toBeDefined()
     // a window that has reset still shows, at 0%, never vanishes
     expect(await ui.find({ text: '5 Hour' })).toBeDefined()
@@ -274,7 +297,7 @@ test('with no reading anywhere, the left side says so', async ($, on) => {
   await $.session.measure(MEASURE)
 
   for (const surface of SURFACES) {
-    const ui = await $.ui.mount({ plugin: 'usage-quota', surface, component: 'AbovePrompt', props: PROPS })
+    const ui = await mountBand($, surface, PROPS)
     expect(await ui.find({ text: 'Usage limits show after the first reply.' })).toBeDefined()
     await ui.unmount()
   }
@@ -311,7 +334,7 @@ test('the plan endpoint gives the limits before any reply, and wins', async ($, 
 
   expect(asked).toEqual([expect.stringMatching(/\/api\/oauth\/usage$/)])
   for (const surface of SURFACES) {
-    const ui = await $.ui.mount({ plugin: 'usage-quota', surface, component: 'AbovePrompt', props: PROPS })
+    const ui = await mountBand($, surface, PROPS)
     expect(await ui.find({ type: 'Text', text: '16%' })).toBeDefined()
     expect(await ui.find({ type: 'Text', text: '7%' })).toBeDefined()
     await ui.unmount()
@@ -337,7 +360,7 @@ test('the exact /context count corrects the estimate, and Messages with it', asy
   await clock.advance(2_000)
 
   for (const surface of SURFACES) {
-    const ui = await $.ui.mount({ plugin: 'usage-quota', surface, component: 'AbovePrompt', props: PROPS })
+    const ui = await mountBand($, surface, PROPS)
     // Tools 20k + 13k, exact; Other 11k; Messages 158k - 33k - 11k = 114k
     expect(await ui.find({ type: 'Text', text: '33k' })).toBeDefined()
     expect(await ui.find({ type: 'Text', text: '11k' })).toBeDefined()
@@ -370,7 +393,7 @@ test('the plan limits are asked again every 2 minutes, with the exact count', as
   on('ui.status', () => ({ value: undefined }))
   await $.session.start({ cwd: '.', surface: 'desktop', isInteractive: true })
 
-  const ui = await $.ui.mount({ plugin: 'usage-quota', surface: 'desktop', component: 'AbovePrompt', props: PROPS })
+  const ui = await mountBand($, 'desktop', PROPS)
   expect(await ui.find({ type: 'Text', text: '22%' })).toBeDefined()
   used = 23
   await clock.advance(60_000)
@@ -399,7 +422,7 @@ test('a failed usage check says why, backs off, and the newest reply figures sho
   await $.session.start({ cwd: '.', surface: 'desktop', isInteractive: true })
   expect(asks).toBe(1)
 
-  const ui = await $.ui.mount({ plugin: 'usage-quota', surface: 'desktop', component: 'AbovePrompt', props: PROPS })
+  const ui = await mountBand($, 'desktop', PROPS)
   // nothing to show yet: the refusal is the line
   expect(await ui.find({ type: 'Text', text: 'usage check refused (429)' })).toBeDefined()
 
@@ -455,7 +478,7 @@ test('after /compact, before any reply, the exact count is shown', async ($, on)
   await clock.advance(1)
 
   for (const surface of SURFACES) {
-    const ui = await $.ui.mount({ plugin: 'usage-quota', surface, component: 'AbovePrompt', props: PROPS })
+    const ui = await mountBand($, surface, PROPS)
     // Messages 23k exact; used 23k + 51k + 11k = 85k; free 1M - 85k - 33k buffer
     expect(await ui.find({ type: 'Text', text: '23k' })).toBeDefined()
     expect(await ui.find({ type: 'Text', text: '882k free of 1M' })).toBeDefined()
@@ -502,7 +525,7 @@ test('a 5 hour window the service has no reset for (not started) shows 0%', asyn
   await $.session.start({ cwd: '.', surface: 'desktop', isInteractive: true })
 
   for (const surface of SURFACES) {
-    const ui = await $.ui.mount({ plugin: 'usage-quota', surface, component: 'AbovePrompt', props: PROPS })
+    const ui = await mountBand($, surface, PROPS)
     expect(await ui.find({ text: '5 Hour' })).toBeDefined()
     expect(await ui.find({ type: 'Text', text: '0%' })).toBeDefined()
     expect(await ui.find({ type: 'Text', text: '9%' })).toBeDefined()
@@ -551,14 +574,14 @@ test('the arrow collapses the band to one row of three bars, and back', async ($
   await $.session.start({ cwd: '.', surface: 'desktop', isInteractive: true })
 
   for (const surface of SURFACES) {
-    const ui = await $.ui.mount({ plugin: 'usage-quota', surface, component: 'AbovePrompt', props: PROPS })
+    const ui = await mountBand($, surface, PROPS)
     expect(await ui.find({ type: 'Button', label: '▼' })).toBeDefined()
     await ui.press({ key: 'collapse' })
     if (surface === 'desktop') {
       // the desktop keeps the bars alone: no headline, no controls
       expect(await ui.find({ text: /^On track\./ })).toBeUndefined()
-      expect(await ui.find({ type: 'Button', label: 'Compact' })).toBeUndefined()
-      expect(await ui.find({ type: 'Button', label: '▲' })).toBeUndefined()
+      expect((await ui.findAll({ type: 'Button' })).some(b => b.props.label === 'Compact')).toBe(false)
+      expect((await ui.findAll({ type: 'Button' })).some(b => b.props.label === '▲')).toBe(false)
     } else {
       // the terminal has no click region: the headline and Compact stay
       expect(await ui.find({ text: /^On track\./ })).toBeDefined()
@@ -603,7 +626,7 @@ test('collapsed is one setting for every chat: another chat collapsing shows her
   const shared: Record<string, unknown> = {}
   const clock = startWorld(on, { value: 16 }, [], [], 'Compact now', shared)
   await $.session.start({ cwd: '.', surface: 'desktop', isInteractive: true })
-  const ui = await $.ui.mount({ plugin: 'usage-quota', surface: 'desktop', component: 'AbovePrompt', props: PROPS })
+  const ui = await mountBand($, 'desktop', PROPS)
   expect(await ui.find({ type: 'Button', label: '▼' })).toBeDefined()
   // the other chat's press, in the store all chats share
   shared.collapsed = true
@@ -621,7 +644,7 @@ test('auto compact: the switch shows the field, and it compacts between turns on
   const clock = startWorld(on, percent, ran)
   await $.session.start({ cwd: '.', surface: 'desktop', isInteractive: true })
 
-  const ui = await $.ui.mount({ plugin: 'usage-quota', surface: 'desktop', component: 'AbovePrompt', props: PROPS })
+  const ui = await mountBand($, 'desktop', PROPS)
   expect(await ui.find({ type: 'Input' })).toBeUndefined()
   await ui.pointer(PILL)
   expect((await ui.find({ type: 'Svg', alt: 'Auto compact on' }))).toBeDefined()
@@ -697,7 +720,7 @@ test('auto compact set below the context asks in the band, and "Now" compacts', 
   const clock = startWorld(on, percent, ran, asked, 'Compact now')
   await $.session.start({ cwd: '.', surface: 'desktop', isInteractive: true })
 
-  const ui = await $.ui.mount({ plugin: 'usage-quota', surface: 'terminal', component: 'AbovePrompt', props: PROPS })
+  const ui = await mountBand($, 'terminal', PROPS)
   await ui.press({ key: 'auto' })
   await ui.input({ key: await fieldKey(ui), text: '40' })
   await clock.advance(1_100)
@@ -718,7 +741,7 @@ test('"After my next compact" holds through a % flickering below, until a real c
   const clock = startWorld(on, percent, ran)
   await $.session.start({ cwd: '.', surface: 'desktop', isInteractive: true })
 
-  const ui = await $.ui.mount({ plugin: 'usage-quota', surface: 'desktop', component: 'AbovePrompt', props: PROPS })
+  const ui = await mountBand($, 'desktop', PROPS)
   await ui.pointer(PILL)
   await ui.input({ key: await fieldKey(ui), text: '19' })
   expect(await ui.find({ type: 'Text', text: /already at/ })).toBeUndefined()
@@ -760,7 +783,7 @@ test('auto compact is per chat: another chat opens with it off, at 30%; turned o
   await clock.advance(3_000)
   expect(ran).toEqual([])
 
-  const ui = await $.ui.mount({ plugin: 'usage-quota', surface: 'desktop', component: 'AbovePrompt', props: PROPS })
+  const ui = await mountBand($, 'desktop', PROPS)
   expect(await ui.find({ type: 'Svg', alt: 'Auto compact off' })).toBeDefined()
   await ui.pointer(PILL)
   expect((await ui.find({ type: 'Input' }))?.props.value).toBe('30')
@@ -868,7 +891,7 @@ test('a narrow chat stacks the band and wraps its text, nothing cut off or dropp
   startWorld(on, { value: 16 }, [])
   await $.session.start({ cwd: '.', surface: 'desktop', isInteractive: true })
   for (const surface of SURFACES) {
-    const ui = await $.ui.mount({ plugin: 'usage-quota', surface, component: 'AbovePrompt', props: { ...PROPS, bodyColumns: 38 } })
+    const ui = await mountBand($, surface, { ...PROPS, bodyColumns: 38 })
     // the headline wraps, never truncated
     const head = await ui.find({ type: 'Text', text: /^On track\./ })
     expect(head?.props.wrap).toBe('wrap')
@@ -893,7 +916,7 @@ test('the desktop in light mode draws in the light palette', async ($, on) => {
   on('fs.read', () => (reads++, { value: JSON.stringify({ userThemeMode: 'light' }) }) as never)
   await $.session.start({ cwd: '.', surface: 'desktop', isInteractive: true })
   await clock.advance(2_000)
-  const ui = await $.ui.mount({ plugin: 'usage-quota', surface: 'desktop', component: 'AbovePrompt', props: PROPS })
+  const ui = await mountBand($, 'desktop', PROPS)
   // the light theme's grey, deep enough to read on the pale band
   expect((await ui.find({ type: 'Text', text: /^On track\./ }))?.props.color).toBe('#73726c')
   const weeklyBar = (await ui.findAll({ type: 'Svg' })).find(svg => /^Weekly/.test(String(svg.props.alt)))
@@ -914,7 +937,7 @@ test('a new chat opens with the auto compact last chosen anywhere, and asks befo
   const clock = startWorld(on, percent, ran, [], 'Compact now', { autoCompactDefault: { isOn: true, at: 40 } })
   await $.session.start({ cwd: '.', surface: 'desktop', isInteractive: true })
   await clock.advance(3_000)
-  const ui = await $.ui.mount({ plugin: 'usage-quota', surface: 'desktop', component: 'AbovePrompt', props: PROPS })
+  const ui = await mountBand($, 'desktop', PROPS)
   expect(await ui.find({ type: 'Svg', alt: 'Auto compact on' })).toBeDefined()
   expect((await ui.find({ type: 'Input' }))?.props.value).toBe('40')
   // already past it: asked, never compacted unasked
@@ -930,7 +953,7 @@ test('a chat with its own auto compact setting keeps it over the default, and it
   const clock = startWorld(on, { value: 10 }, [], [], 'Compact now', { autoCompactDefault: { isOn: true, at: 40 }, 'autoCompact:first': { isOn: false, at: 60 } })
   on('session.id', () => ({ value: chat.id }) as never)
   await $.session.start({ cwd: '.', surface: 'desktop', isInteractive: true })
-  const ui = await $.ui.mount({ plugin: 'usage-quota', surface: 'desktop', component: 'AbovePrompt', props: PROPS })
+  const ui = await mountBand($, 'desktop', PROPS)
   expect(await ui.find({ type: 'Svg', alt: 'Auto compact off' })).toBeDefined()
   // the pill takes a click anywhere on it through an empty region, never a Button, whose
   // hover fill and focus ring drew a frame round it
@@ -966,7 +989,7 @@ test('the band says what this chat took of the 5 hour limit, in all and by its l
   on('turn.start', () => ({ turnId: 't1' }))
   on('turn.complete', () => ({ text: '' }))
   await $.session.measure(MEASURE)
-  const ui = await $.ui.mount({ plugin: 'usage-quota', surface: 'desktop', component: 'AbovePrompt', props: PROPS })
+  const ui = await mountBand($, 'desktop', PROPS)
   // nothing counted before a reply
   expect(await ui.find({ text: /^This chat used/ })).toBeUndefined()
   await $.turn.start({ text: 'go', turnId: 't1' } as never)
@@ -998,7 +1021,7 @@ test('a 5 hour window that resets mid-turn starts the chat total over', async ($
   on('turn.start', () => ({ turnId: 't1' }))
   on('turn.complete', () => ({ text: '' }))
   await $.session.measure(MEASURE)
-  const ui = await $.ui.mount({ plugin: 'usage-quota', surface: 'desktop', component: 'AbovePrompt', props: PROPS })
+  const ui = await mountBand($, 'desktop', PROPS)
   await $.turn.start({ text: 'go', turnId: 't1' } as never)
   state.percent = 81
   await clock.advance(1_000)
@@ -1020,7 +1043,7 @@ test('on by the default alone, the first reading past the % asks even when the c
   const clock = startWorld(on, percent, ran, [], 'Compact now', { autoCompactDefault: { isOn: true, at: 40 } })
   await $.session.start({ cwd: '.', surface: 'desktop', isInteractive: true })
   await clock.advance(3_000)
-  const ui = await $.ui.mount({ plugin: 'usage-quota', surface: 'desktop', component: 'AbovePrompt', props: PROPS })
+  const ui = await mountBand($, 'desktop', PROPS)
   expect(await ui.find({ type: 'Text', text: /already at/ })).toBeUndefined()
   // the exact count lands above the estimate: asked, not compacted
   percent.value = 45
@@ -1038,7 +1061,7 @@ test('34% a quarter hour into a 5 hour window is no run-out alarm: grey bar, gre
   ])
   await $.session.measure(MEASURE)
   for (const surface of SURFACES) {
-    const ui = await $.ui.mount({ plugin: 'usage-quota', surface, component: 'AbovePrompt', props: PROPS })
+    const ui = await mountBand($, surface, PROPS)
     expect(await ui.find({ text: /run out/ })).toBeUndefined()
     expect((await ui.find({ type: 'Text', text: /^On track\./ }))?.props.color).toBe(GREY)
     expect((await ui.find({ type: 'Text', text: '34%' }))?.props.color).toBe(GREY)
@@ -1051,7 +1074,7 @@ test('early in a window the forecast starts from the usual pace: a quick 4% does
   // 4% in the first 10 minutes: alone that runs to 120%; on the usual pace, 52%
   world(on, [{ kind: 'five_hour', percentUsed: 4, resetsAt: iso(5 * HOUR - 10 * MIN) }])
   await $.session.measure(MEASURE)
-  const ui = await $.ui.mount({ plugin: 'usage-quota', surface: 'desktop', component: 'AbovePrompt', props: PROPS })
+  const ui = await mountBand($, 'desktop', PROPS)
   expect(await ui.find({ text: /^On track\./ })).toBeDefined()
   expect(await ui.find({ text: 'On pace for about 52% by reset – resets in 4h 50m' })).toBeDefined()
   await ui.unmount()
@@ -1065,7 +1088,7 @@ test('the usual pace is learned from how far past windows got', async ($, on) =>
   answerRest(on, [])
   await clock.advance(1)
   await $.session.measure(MEASURE)
-  const ui = await $.ui.mount({ plugin: 'usage-quota', surface: 'desktop', component: 'AbovePrompt', props: PROPS })
+  const ui = await mountBand($, 'desktop', PROPS)
   // usual 20%: 4% + about 19% more
   expect(await ui.find({ text: 'On pace for about 23% by reset – resets in 4h 50m' })).toBeDefined()
   await ui.unmount()
@@ -1091,7 +1114,7 @@ test("a reopened chat's first reply, re-reading its history, is left out of the 
   state.percent = 30
   await $.session.measure(MEASURE)
   await $.turn.complete(TURN)
-  const ui = await $.ui.mount({ plugin: 'usage-quota', surface: 'desktop', component: 'AbovePrompt', props: PROPS })
+  const ui = await mountBand($, 'desktop', PROPS)
   // paced on the 10% of real use, not 30%: on track at about 70%, not running out
   expect(await ui.find({ text: /^On track\./ })).toBeDefined()
   expect(await ui.find({ text: '30%' })).toBeDefined()
@@ -1124,7 +1147,7 @@ test('a newer reply carrying only the 5 hour window never wipes out Weekly, in t
   answerRest(on, [])
   await $.session.measure(MEASURE)
   for (const surface of SURFACES) {
-    const ui = await $.ui.mount({ plugin: 'usage-quota', surface, component: 'AbovePrompt', props: PROPS })
+    const ui = await mountBand($, surface, PROPS)
     expect(await ui.find({ type: 'Text', text: '12%' })).toBeDefined()
     expect(await ui.find({ type: 'Text', text: '58%' })).toBeDefined()
     expect(await ui.find({ text: 'starts with your next message' })).toBeUndefined()
@@ -1136,7 +1159,7 @@ test('a newer reply carrying only the 5 hour window never wipes out Weekly, in t
   ]
   await clock.advance(1_000)
   await $.session.measure(MEASURE)
-  const ui = await $.ui.mount({ plugin: 'usage-quota', surface: 'desktop', component: 'AbovePrompt', props: PROPS })
+  const ui = await mountBand($, 'desktop', PROPS)
   expect(await ui.find({ type: 'Text', text: '13%' })).toBeDefined()
   expect(await ui.find({ type: 'Text', text: '59%' })).toBeDefined()
   expect(await ui.find({ text: 'starts with your next message' })).toBeUndefined()
@@ -1162,7 +1185,7 @@ test("a newer reply figure below the usage service's never pulls the band under 
   // a reply then carries the same reading, cut to 18
   state.rateLimits = [{ kind: 'seven_day', percentUsed: 18, resetsAt: iso(3 * 24 * HOUR) }]
   await $.session.measure(MEASURE)
-  const ui = await $.ui.mount({ plugin: 'usage-quota', surface: 'desktop', component: 'AbovePrompt', props: PROPS })
+  const ui = await mountBand($, 'desktop', PROPS)
   expect(await ui.find({ type: 'Text', text: '19%' })).toBeDefined()
   // a reply past it is news: 20
   await clock.advance(1_000)
@@ -1184,7 +1207,7 @@ test('a limit bar and its % stay grey to 50% used, turn yellow by 75% and red by
     state.percent = percent
     await clock.advance(1_000)
     await $.session.measure(MEASURE)
-    const ui = await $.ui.mount({ plugin: 'usage-quota', surface: 'desktop', component: 'AbovePrompt', props: PROPS })
+    const ui = await mountBand($, 'desktop', PROPS)
     expect(await ui.find({ text: /^On track\./ })).toBeDefined()
     expect((await ui.find({ type: 'Text', text: `${percent}%` }))?.props.color).toBe(color)
     await ui.unmount()
@@ -1204,7 +1227,7 @@ test('Context stays grey to 25%, turns yellow by 50% and red by 80%', async ($, 
     state.percent = percent
     await clock.advance(1_000)
     await $.session.measure(MEASURE)
-    const ui = await $.ui.mount({ plugin: 'usage-quota', surface: 'desktop', component: 'AbovePrompt', props: PROPS })
+    const ui = await mountBand($, 'desktop', PROPS)
     expect((await ui.find({ type: 'Text', text: `${percent}% used` }))?.props.color).toBe(color)
     await ui.unmount()
   }
@@ -1231,7 +1254,7 @@ test('the cache bar counts down from each main-chat reply, for the lifetime the 
     for (let i = 0; i < minutes; i++) await clock.advance(60_000)
   }
   await $.session.start({ cwd: '.', surface: 'desktop', isInteractive: true })
-  const ui = await $.ui.mount({ plugin: 'usage-quota', surface: 'desktop', component: 'AbovePrompt', props: PROPS })
+  const ui = await mountBand($, 'desktop', PROPS)
   // before any reply: nothing to count down
   expect(await ui.find({ text: 'no reply yet' })).toBeDefined()
 
@@ -1291,7 +1314,7 @@ test('keep cache warm: switched on in a chat, it re-reads the cache just before 
     for (let i = 0; i < minutes; i++) await clock.advance(60_000)
   }
   await $.session.start({ cwd: '.', surface: 'desktop', isInteractive: true })
-  const ui = await $.ui.mount({ plugin: 'usage-quota', surface: 'desktop', component: 'AbovePrompt', props: PROPS })
+  const ui = await mountBand($, 'desktop', PROPS)
   for await (const _ of $.turn.step({ turnId: 't1', index: 0, model: 'claude', messageCount: 1 } as never)) void _
 
   // off by default: the hour runs out and nothing is sent
@@ -1332,4 +1355,26 @@ test('keep cache warm: switched on in a chat, it re-reads the cache just before 
   await ui.pointer({ type: 'down', x: 1, y: 0, button: 'left', in: 'warmHit' })
   expect(await ui.find({ type: 'Svg', alt: 'Keep cache warm off' })).toBeDefined()
   await ui.unmount()
+})
+
+test('on the desktop the two switches sit under the prompt, before the footer\'s own line, and not in the band', async ($, on) => {
+  // the footer's own line, as the engine draws it (answered ahead of the world's defaults)
+  on('ui.render', { component: 'PromptHint' }, () => ({ type: 'Text', props: {}, children: ['? for shortcuts'] }) as never)
+  startWorld(on, { value: 16 }, [])
+  await $.session.start({ cwd: '.', surface: 'desktop', isInteractive: true })
+  const band = await $.ui.mount({ plugin: 'usage-quota', surface: 'desktop', component: 'AbovePrompt', props: PROPS })
+  const hint = await $.ui.mount({ plugin: 'usage-quota', surface: 'desktop', component: 'PromptHint', props: HINT_PROPS as never })
+  expect((await hint.findAll({ type: 'Svg' })).map(s => s.props.alt)).toEqual(['Auto compact off', 'Keep cache warm off'])
+  // the footer's own line stays, after the switches
+  const texts = (await hint.findAll({ type: 'Text' })).map(t => t.text)
+  expect(texts.indexOf('Keep cache warm')).toBeLessThan(texts.indexOf('? for shortcuts'))
+  // the band keeps Compact and the arrow, no switches
+  expect((await band.findAll({ type: 'Svg' })).some(s => /^(Auto compact|Keep cache warm)/.test(String(s.props.alt)))).toBe(false)
+  expect((await band.findAll({ type: 'Button' })).some(b => b.props.label === 'Compact')).toBe(true)
+  // a click in the footer turns auto compact on there, its % field beside it
+  await hint.pointer({ type: 'down', x: 1, y: 0, button: 'left', in: 'autoHit' })
+  expect(await hint.find({ type: 'Svg', alt: 'Auto compact on' })).toBeDefined()
+  expect(await hint.find({ type: 'Input' })).toBeDefined()
+  await hint.unmount()
+  await band.unmount()
 })

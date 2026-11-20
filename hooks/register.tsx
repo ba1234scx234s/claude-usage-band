@@ -4,7 +4,7 @@ import type { EngineInterface, Register } from 'claude-code'
 import type { AutoCompact, CacheWindow, Hold, Limit, PaceOf, Snapshot, Spend } from '../types'
 import { stepAlerts } from './alerts'
 import type { Alerts } from './alerts'
-import { bandTree, summary } from './band'
+import { bandTree, summary, switchesRow } from './band'
 import type { BandActions } from './band'
 import { historyTree } from './history'
 import { addChatUse, addHistory, AskError, chatLabel, contextFigures, idName, isPlanDue, nextBackoff, parsePlan, pickLimits, retryAfterMs, spikeOf, stepPace, sumGroups, turnCosts } from './limits'
@@ -679,6 +679,9 @@ function bandActions($: EngineInterface): BandActions {
   }
 }
 
+// where the switches are drawn: the band, and (on the desktop) the prompt's footer
+const SWITCH_SITES = ['AbovePrompt', 'PromptHint'] as const
+
 export const register: Register = (on, options) => {
   settings = readSettings(options)
 
@@ -732,13 +735,13 @@ export const register: Register = (on, options) => {
     return next(e)
   }).catch(($, e, next) => next(e)) // a draft that fails to set never holds the focus back
 
-  on('ui.press', { component: 'AbovePrompt' }, async ($, e, next) => {
+  on('ui.press', { component: SWITCH_SITES }, async ($, e, next) => {
     await commitDraft($)
     return next(e)
   })
 
   // a press on the switch's pill, from its click region (switch-hit.tsx)
-  on('ui.message', { component: 'AbovePrompt' }, async ($, e, next) => {
+  on('ui.message', { component: SWITCH_SITES }, async ($, e, next) => {
     if (e.element === 'autoHit' && e.data === 'toggle') {
       await commitDraft($)
       bandActions($).toggleAuto(await read($, autoCompact))
@@ -770,7 +773,7 @@ export const register: Register = (on, options) => {
   })
 
   // the region failed on this surface: the band redraws with a Button over the pill
-  on('ui.fault', { component: 'AbovePrompt' }, async ($, e, next) => {
+  on('ui.fault', { component: SWITCH_SITES }, async ($, e, next) => {
     if (e.element === 'autoHit') isHitDown = true
     if (e.element === 'warmHit') isWarmHitDown = true
     if (e.element === 'barsHit') isBarsHitDown = true
@@ -851,6 +854,32 @@ export const register: Register = (on, options) => {
       t: stringsOf(await read($, language)),
       isLight: (await read($, theme)) === 'light',
     }, (field, value) => void setSetting($, field, value))
+  })
+
+  // the desktop: the two switches at the left of the prompt's footer, the engine's own
+  // line after them (the model picker sits on the right, as before)
+  on('ui.render', { component: 'PromptHint' }, async ($, e, next) => {
+    if (e.surface !== 'desktop' || !(await read($, isOn))) return next(e)
+    const own = await next(e)
+    const table = $.ui.resolve(e)
+    const { Box } = table
+    const auto = await read($, autoCompact)
+    const row = switchesRow(table, e.surface, {
+      auto,
+      tick: await read($, fieldTick),
+      drawnAt: (await read($, fieldText)) ?? `${auto.at ?? settings.autoCompactAt}`,
+      t: stringsOf(await read($, language)),
+      isLight: (await read($, theme)) === 'light',
+      keepWarm: await read($, keepWarm),
+      isHitDown,
+      isWarmHitDown,
+    }, bandActions($))
+    return (
+      <Box flexDirection="row" alignItems="center" columnGap={2}>
+        {row}
+        {own}
+      </Box>
+    )
   })
 
   on('ui.render', { component: 'AbovePrompt' }, async ($, e, next) => {
