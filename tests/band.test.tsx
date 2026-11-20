@@ -1260,13 +1260,13 @@ test('the cache bar counts down from each main-chat reply, for the lifetime the 
   expect(await ui.find({ text: 'expired' })).toBeDefined()
   expect((await ui.find({ type: 'Text', text: 'expired' }))?.props.color).toBe('#e5534b')
 
-  // a 5 minute write, collapsed: the Cache slot shows its lifetime and the time left
+  // a 5 minute write, collapsed: the Cache slot shows its name and the time left, no lifetime
   ttl = '5m'
   await step()
   await wait(1)
   await ui.press({ key: 'collapse' })
   expect(await ui.find({ type: 'Text', text: 'Cache' })).toBeDefined()
-  expect(await ui.find({ type: 'Text', text: '5m' })).toBeDefined()
+  expect(await ui.find({ type: 'Text', text: '5m' })).toBeUndefined()
   expect(await ui.find({ type: 'Text', text: '4m' })).toBeDefined()
   // the four take a quarter of the row each
   expect((await ui.findAll({ type: 'Box' })).filter(b => b.props.width === '25%').length).toBe(4)
