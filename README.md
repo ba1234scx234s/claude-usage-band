@@ -1,40 +1,7 @@
 > [!NOTE]
 > **This is a fork** of [usage-quota](https://github.com/4anti/claude-better-usage-mod) by Anant Raghunath (MIT). It adds a compact one-row band (only the bars; a click expands it), a **Cache** bar that counts down the prompt cache after each reply, a **Keep cache warm** switch and a wider Auto compact field. Install it with `/plugin marketplace add ba1234scx234s/claude-usage-band` and `/plugin install usage-quota@claude-usage-band`.
 
-<div align="center">
 
-
-<br>
-
-[![Tests](https://img.shields.io/github/actions/workflow/status/4anti/claude-better-usage-mod/test.yml?branch=main&style=flat-square&labelColor=212121&color=373838&label=tests)](https://github.com/4anti/claude-better-usage-mod/actions/workflows/test.yml)
-[![Version](https://img.shields.io/badge/version-0.5.1-373838?style=flat-square&labelColor=212121)](https://github.com/4anti/claude-better-usage-mod/releases)
-[![Claude Code](https://img.shields.io/badge/Claude_Code-2.1.287%2B-373838?style=flat-square&labelColor=212121)](https://claude.com/claude-code)
-[![Works in](https://img.shields.io/badge/works_in-Desktop_%2B_Terminal-373838?style=flat-square&labelColor=212121)](#install)
-[![Languages](https://img.shields.io/badge/languages-16-373838?style=flat-square&labelColor=212121)](#languages)
-[![License: MIT](https://img.shields.io/badge/license-MIT-373838?style=flat-square&labelColor=212121)](LICENSE)
-
-[Install](#install) &nbsp;·&nbsp; [Features](#features) &nbsp;·&nbsp; [Colour](#colour-that-means-something) &nbsp;·&nbsp; [How it works](#how-it-works) &nbsp;·&nbsp; [Usage](#usage) &nbsp;·&nbsp; [Settings](#settings) &nbsp;·&nbsp; [Privacy](#privacy)
-
-<img src="docs/stats.svg" width="100%" alt="2 limits tracked (5 Hour and Weekly), 16 languages, 0 tokens used, 3 second live refresh">
-
-</div>
-
-<img src="docs/divider.svg" width="100%" alt="">
-
-## See it in the app
-
-A live band above the Claude Code prompt. It shows your **5 Hour** and **Weekly** limits with a forecast to the next reset, alerts before you run out, what each chat used, and how full the context window is. Compact in one click, or let it compact for you.
-
-<p align="center"><img src="docs/band-expanded.png" alt="The usage band above the prompt in the Claude desktop app, expanded: 5 Hour at 7%, Weekly at 57% with a red forecast tick, context at 38%" width="100%"></p>
-
-Collapsed, it is one row with the time left until each limit resets. Every chat shares the collapsed or expanded state.
-
-<p align="center"><img src="docs/band-collapsed.png" alt="The band collapsed to one row: 5H 4h 51m at 7%, W 5d 11h at 57%, Context 1M at 38%" width="100%"></p>
-
-> [!NOTE]
-> The band reads your limits as soon as a session opens, so they are there before the first reply. The context refreshes every 3 seconds and your plan about every 2 minutes. It costs no tokens and does not count toward your limits. The 5 Hour and Weekly limits are your whole Claude account's, Claude chat and Cowork included.
-
-<img src="docs/divider.svg" width="100%" alt="">
 
 ## Why Context and Cache matter
 
