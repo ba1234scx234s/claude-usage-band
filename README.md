@@ -1,5 +1,5 @@
 > [!NOTE]
-> **This is a fork** of [usage-quota](https://github.com/4anti/claude-better-usage-mod) by Anant Raghunath (MIT). It adds a compact one-row band (only the bars; a click expands it), a **Cache** bar that counts down the prompt cache after each reply, a **Keep cache warm** switch and a wider Auto compact field. Install it with `/plugin marketplace add ba1234scx234s/claude-usage-band` and `/plugin install usage-quota@claude-usage-band`.
+> **This is a fork** of [usage-quota](https://github.com/4anti/claude-better-usage-mod) by Anant Raghunath (MIT). It adds a compact one-row band (only the bars; a click expands it), a **Cache** bar that counts down the prompt cache after each reply, a **Keep cache warm** switch and a wider Auto compact field.
 
 
 
