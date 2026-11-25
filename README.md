@@ -3,7 +3,6 @@
 
 <div align="center">
 
-<img src="docs/hero.svg" width="100%" alt="Usage Quota inside a Claude Code chat: the band sits directly above the prompt box. The 5 Hour bar fills from grey through yellow to red as the limit runs out, next to the Weekly limit, forecast ticks, context window usage, Compact and Auto compact">
 
 <br>
 
