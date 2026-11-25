@@ -3,6 +3,39 @@
 
 
 
+## Install
+
+Needs **Claude Code 2.1.287 or later**, signed in with a **Pro or Max** plan. One install covers both the desktop app and the terminal.
+
+**Desktop app.** In the **Code** tab, send this as a message, allow the `claude plugin` commands if asked, then quit and reopen the app:
+
+```text
+Install the usage-quota plugin from the GitHub marketplace ba1234scx234s/claude-usage-band
+```
+
+**Terminal.** Inside `claude`, run these one at a time:
+
+```text
+/plugin marketplace add ba1234scx234s/claude-usage-band
+```
+
+```text
+/plugin install usage-quota@claude-usage-band
+```
+
+```text
+/reload-plugins
+```
+
+> [!IMPORTANT]
+> **Have the original usage-quota installed?** Remove it first, or two bands will draw:
+>
+> ```bash
+> claude plugin marketplace remove 4anti-mods
+> ```
+
+To update later, run `claude plugin marketplace update claude-usage-band` and `claude plugin update usage-quota@claude-usage-band`, then restart Claude Code.
+
 ## See it in the app
 
 Collapsed, the band is one row of bars: 5 hour and weekly limits with the time left until each resets, context window use, and how long the prompt cache has left. Click the bars to expand it.
