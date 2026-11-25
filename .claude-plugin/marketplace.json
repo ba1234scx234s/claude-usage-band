@@ -1,0 +1,18 @@
+{
+  "name": "claude-usage-band",
+  "owner": {
+    "name": "ba1234scx234s"
+  },
+  "metadata": {
+    "description": "A fork of usage-quota: a compact usage band above the Claude Code prompt."
+  },
+  "plugins": [
+    {
+      "name": "usage-quota",
+      "source": "./",
+      "description": "5 hour, weekly, context and prompt-cache bars above the prompt. Collapsed it shows only the bars; a click expands it. Fork of usage-quota 0.5.1 by Anant Raghunath.",
+      "version": "0.5.1-local.13",
+      "license": "MIT"
+    }
+  ]
+}

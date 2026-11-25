@@ -3,11 +3,11 @@
   "version": "0.5.1-local.13",
   "description": "Know your Claude limits before they hit you (Live band above the Claude Code prompt): 5 Hour and Weekly usage (whole account) with a live usage forecast against limit resets, alerts, usage history, 16 languages, what this chat took, context window usage, one-click Compact and Auto compact.",
   "author": { "name": "Anant Raghunath", "url": "https://github.com/anantraghunath" },
-  "homepage": "https://github.com/4anti/claude-better-usage-mod",
-  "repository": "https://github.com/4anti/claude-better-usage-mod",
+  "homepage": "https://github.com/ba1234scx234s/claude-usage-band",
+  "repository": "https://github.com/ba1234scx234s/claude-usage-band",
   "license": "MIT",
   "keywords": ["usage", "quota", "rate limits", "context window", "compact", "mod"],
-  "privacyPolicyUrl": "https://github.com/4anti/claude-better-usage-mod#privacy",
+  "privacyPolicyUrl": "https://github.com/ba1234scx234s/claude-usage-band#privacy",
   "types": "./types/index.d.ts",
   "userConfig": {
     "language": {

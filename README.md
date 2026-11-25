@@ -1,3 +1,6 @@
+> [!NOTE]
+> **This is a fork** of [usage-quota](https://github.com/4anti/claude-better-usage-mod) by Anant Raghunath (MIT). It adds a compact one-row band (only the bars; a click expands it), a **Cache** bar that counts down the prompt cache after each reply, a **Keep cache warm** switch and a wider Auto compact field. Install it with `/plugin marketplace add ba1234scx234s/claude-usage-band` and `/plugin install usage-quota@claude-usage-band`.
+
 <div align="center">
 
 <img src="docs/hero.svg" width="100%" alt="Usage Quota inside a Claude Code chat: the band sits directly above the prompt box. The 5 Hour bar fills from grey through yellow to red as the limit runs out, next to the Weekly limit, forecast ticks, context window usage, Compact and Auto compact">
@@ -136,17 +139,17 @@ Needs **Claude Code 2.1.287 or later**, signed in with a **Pro or Max** plan. On
 **Desktop app.** In the **Code** tab, send this as a message, allow the `claude plugin` commands if asked, then quit and reopen the app:
 
 ```text
-Install the usage-quota plugin from the GitHub marketplace 4anti/claude-better-usage-mod
+Install the usage-quota plugin from the GitHub marketplace ba1234scx234s/claude-usage-band
 ```
 
 **Terminal.** Inside `claude`, run these one at a time:
 
 ```text
-/plugin marketplace add 4anti/claude-better-usage-mod
+/plugin marketplace add ba1234scx234s/claude-usage-band
 ```
 
 ```text
-/plugin install usage-quota@4anti-mods
+/plugin install usage-quota@claude-usage-band
 ```
 
 ```text
@@ -154,10 +157,10 @@ Install the usage-quota plugin from the GitHub marketplace 4anti/claude-better-u
 ```
 
 > [!IMPORTANT]
-> **Have the original version installed?** Remove it first, or two bands will draw:
+> **Have the original usage-quota installed?** Remove it first, or two bands will draw:
 >
 > ```bash
-> claude plugin marketplace remove claude-code-usage-quota-mod
+> claude plugin marketplace remove 4anti-mods
 > ```
 >
 > Saved settings are kept per marketplace, so Auto compact settings and the learned pace start fresh here.
@@ -168,21 +171,21 @@ Install the usage-quota plugin from the GitHub marketplace 4anti/claude-better-u
 Install:
 
 ```bash
-claude plugin marketplace add 4anti/claude-better-usage-mod
-claude plugin install usage-quota@4anti-mods
+claude plugin marketplace add ba1234scx234s/claude-usage-band
+claude plugin install usage-quota@claude-usage-band
 ```
 
 Update, then restart Claude Code:
 
 ```bash
-claude plugin marketplace update 4anti-mods
-claude plugin update usage-quota@4anti-mods
+claude plugin marketplace update claude-usage-band
+claude plugin update usage-quota@claude-usage-band
 ```
 
 Uninstall, then restart Claude Code:
 
 ```bash
-claude plugin marketplace remove 4anti-mods
+claude plugin marketplace remove claude-usage-band
 ```
 
 </details>
